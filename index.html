@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no" />
   <meta name="theme-color" content="#f7f7f2" />
-  <title>아콩이네 공동가계부🫛 v1.1</title>
+  <title>아콩이네 공동가계부🫛 v1.2.1</title>
   <link rel="manifest" href="manifest.webmanifest" />
   <style>
     :root{
@@ -115,7 +115,7 @@
 <header>
   <div class="title-row">
     <h1>아콩이네 공동가계부🫛</h1>
-    <span class="version">version 1.1</span>
+    <span class="version">version 1.2.1</span>
   </div>
   <div class="month-nav">
     <button id="prevMonth">‹</button>
@@ -172,7 +172,10 @@
       <div class="card kpi"><div class="label">총부채</div><div class="value" id="aLiabs">0원</div></div>
       <div class="card kpi wide"><div class="label">공동 순자산</div><div class="value" id="aNet">0원</div></div>
     </div>
-    <div class="section-title"><h2>재산 목록</h2><button onclick="openAccount()">+ 계좌/재산 추가</button></div>
+    <div class="section-title"><h2>재산 목록</h2><div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">
+      <button onclick="openInitialAsset()">+ 초기자산</button>
+      <button onclick="openAccount()">+ 계좌/재산 추가</button>
+    </div></div>
     <div id="assetGroups"></div>
     <div class="card hint">거래를 등록할 때 연결 계좌·카드를 선택하면 잔액이 자동으로 반영돼요. 계좌 간 이동은 지출이 아니라 ‘자산이동’으로 기록됩니다.</div>
   </section>
@@ -254,7 +257,7 @@
       <div class="data-row">
         <div>
           <div class="data-title">전체 JSON 백업</div>
-          <div class="data-desc">설정·카테고리·재산·모든 거래를 한 번에 보관해요.</div>
+          <div class="data-desc">설정·카테고리·초기자산·재산·모든 거래를 한 번에 보관해요.</div>
         </div>
         <button class="data-action dark" id="exportJson">백업</button>
       </div>
@@ -316,6 +319,29 @@
   <div class="modal-actions">
     <button class="ghost" onclick="txDialog.close()">취소</button>
     <button class="primary" id="saveTx">저장</button>
+  </div>
+</div></dialog>
+
+
+<dialog id="initialAssetDialog"><div class="modal">
+  <h3>초기자산 등록</h3>
+  <div class="form">
+    <div class="field"><label>기준일</label><input id="initialDate" type="date" /></div>
+    <div class="field"><label>자산명</label><input id="initialName" placeholder="예: 비상금, 토스, 청년도약계좌" /></div>
+    <div class="field"><label>종류</label>
+      <select id="initialType">
+        <option value="bank">통장</option><option value="cash">현금</option><option value="saving">예·적금</option>
+        <option value="investment">투자</option><option value="deposit">보증금/기타자산</option>
+        <option value="card">카드 미결제금</option><option value="loan">대출/기타부채</option>
+      </select>
+    </div>
+    <div class="field"><label>초기금액</label><input id="initialAmount" type="number" step="1" inputmode="numeric" /></div>
+    <div class="field full"><label>메모</label><input id="initialMemo" placeholder="예: 2026-08-20 정산 전 잔액" /></div>
+  </div>
+  <div class="hint" style="margin-top:10px">초기자산은 기존에 보유하고 있던 재산을 등록하는 기능입니다. 수입·지출 내역에는 포함되지 않고 재산에만 반영됩니다.</div>
+  <div class="modal-actions">
+    <button class="ghost" onclick="initialAssetDialog.close()">취소</button>
+    <button class="primary" id="saveInitialAsset">등록</button>
   </div>
 </div></dialog>
 
@@ -456,7 +482,7 @@ function renderAssets(){
   assetGroups.innerHTML=order.map(type=>{
     const arr=db.accounts.filter(a=>a.type===type); if(!arr.length)return '';
     return `<div class="asset-group"><div class="asset-head"><strong>${accTypeLabel(type)}</strong><span>${won(arr.reduce((s,a)=>s+a.balance,0))}</span></div>
-    ${arr.map(a=>`<div class="asset-card row" onclick="editAccount('${a.id}')"><div><div class="row-title">${escapeHtml(a.name)}</div><div class="row-meta">${escapeHtml(a.memo||accTypeLabel(a.type))}</div></div><div class="amt">${won(a.balance)}</div></div>`).join('')}</div>`
+    ${arr.map(a=>`<div class="asset-card row" onclick="editAccount('${a.id}')"><div><div class="row-title">${escapeHtml(a.name)}${a.initialAsset?' <span style="font-size:10px;color:var(--accent);font-weight:700">초기자산</span>':''}</div><div class="row-meta">${a.initialAsset&&a.initialDate?escapeHtml(a.initialDate)+' · ':''}${escapeHtml(a.memo||accTypeLabel(a.type))}</div></div><div class="amt">${won(a.balance)}</div></div>`).join('')}</div>`
   }).join('');
 }
 function renderCalendar(){
@@ -524,6 +550,37 @@ function updateTxTypeUI(){
   const t=txType.value;toWrap.style.display=['transfer','debt'].includes(t)?'flex':'none';
   fromLabel.textContent=t==='income'?'입금 계좌':t==='expense'?'결제 계좌/카드':t==='transfer'?'보내는 계좌/자산':'상환 출금 계좌';
 }
+
+function openInitialAsset(){
+  initialDate.value=new Date().toISOString().slice(0,10);
+  initialName.value='';
+  initialType.value='bank';
+  initialAmount.value='';
+  initialMemo.value='';
+  initialAssetDialog.showModal();
+}
+window.openInitialAsset=openInitialAsset;
+
+saveInitialAsset.onclick=()=>{
+  const name=initialName.value.trim();
+  const amount=Number(initialAmount.value);
+  if(!initialDate.value){alert('기준일을 입력해 주세요.');return}
+  if(!name){alert('자산명을 입력해 주세요.');return}
+  if(!Number.isFinite(amount)){alert('초기금액을 입력해 주세요.');return}
+  db.accounts.push({
+    id:crypto.randomUUID(),
+    name,
+    type:initialType.value,
+    balance:amount,
+    memo:initialMemo.value.trim(),
+    initialAsset:true,
+    initialDate:initialDate.value,
+    initialAmount:amount
+  });
+  initialAssetDialog.close();
+  save();
+}
+
 function openAccount(){accountId.value='';accountName.value='';accountType.value='bank';accountBalance.value=0;accountMemo.value='';accountTitle.textContent='계좌/재산 추가';accountDialog.showModal()}
 window.openAccount=openAccount;
 window.editAccount=function(id){const a=db.accounts.find(x=>x.id===id);if(!a)return;accountId.value=a.id;accountName.value=a.name;accountType.value=a.type;accountBalance.value=a.balance;accountMemo.value=a.memo||'';accountTitle.textContent='계좌/재산 수정';accountDialog.showModal()}
@@ -556,8 +613,22 @@ saveTx.onclick=()=>{
 }
 saveAccount.onclick=()=>{
   const name=accountName.value.trim();if(!name){alert('이름을 입력해 주세요.');return}
-  const id=accountId.value, obj={id:id||crypto.randomUUID(),name,type:accountType.value,balance:Number(accountBalance.value)||0,memo:accountMemo.value.trim()};
-  const ex=db.accounts.find(a=>a.id===id); if(ex)Object.assign(ex,obj); else db.accounts.push(obj);
+  const id=accountId.value, ex=db.accounts.find(a=>a.id===id);
+  const obj={
+    id:id||crypto.randomUUID(),
+    name,
+    type:accountType.value,
+    balance:Number(accountBalance.value)||0,
+    memo:accountMemo.value.trim()
+  };
+  if(ex){
+    if(ex.initialAsset){
+      obj.initialAsset=true;
+      obj.initialDate=ex.initialDate;
+      obj.initialAmount=ex.initialAmount;
+    }
+    Object.assign(ex,obj);
+  } else db.accounts.push(obj);
   accountDialog.close();save();
 }
 saveBudget.onclick=()=>{db.budget=Math.max(0,Number(budgetInput.value)||0);save()}
@@ -566,6 +637,7 @@ window.deleteCategory=function(enc){const c=decodeURIComponent(enc);if(confirm(`
 
 txDialog.addEventListener('click',e=>{if(e.target===txDialog)txDialog.close()});
 accountDialog.addEventListener('click',e=>{if(e.target===accountDialog)accountDialog.close()});
+initialAssetDialog.addEventListener('click',e=>{if(e.target===initialAssetDialog)initialAssetDialog.close()});
 
 let pendingCsvFile=null;
 let pendingJsonFile=null;
