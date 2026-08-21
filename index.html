@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no" />
   <meta name="theme-color" content="#f7f7f2" />
-  <title>아콩이네 공동가계부🫛 v1.4</title>
+  <title>아콩이네 공동가계부🫛 v1.6</title>
   <link rel="manifest" href="manifest.webmanifest" />
   <style>
     :root{
@@ -121,7 +121,7 @@
 <header>
   <div class="title-row">
     <h1>아콩이네 공동가계부🫛</h1>
-    <span class="version">version 1.4</span>
+    <span class="version">version 1.6</span>
   </div>
   <div class="month-nav">
     <button id="prevMonth">‹</button>
@@ -272,16 +272,7 @@
     </div>
 
     <div class="hint" style="padding:4px 2px 10px">데이터는 이 기기의 브라우저에 저장됩니다. 중요한 데이터는 정기적으로 JSON 백업해 주세요.</div>
-
-    <div class="data-card" style="margin-top:6px">
-      <div class="data-row">
-        <div>
-          <div class="data-title">데이터 초기화</div>
-          <div class="data-desc">예산·카테고리·초기자산·재산·모든 거래를 기본 상태로 되돌립니다.</div>
-        </div>
-        <button class="danger" id="resetData">초기화</button>
-      </div>
-    </div>
+    <div id="dataManageStatus" class="hint" style="padding:2px 2px 8px;color:var(--accent);min-height:18px"></div>
   
     <div class="section-title"><h2>데이터 초기화</h2></div>
     <div class="reset-card">
@@ -546,137 +537,434 @@ txDialog.addEventListener('click',e=>{if(e.target===txDialog)txDialog.close()});
 accountDialog.addEventListener('click',e=>{if(e.target===accountDialog)accountDialog.close()});
 initialAssetDialog.addEventListener('click',e=>{if(e.target===initialAssetDialog)initialAssetDialog.close()});
 
-let pendingCsvFile=null;
-let pendingJsonFile=null;
 
-exportJson.onclick=()=>{
-  const blob=new Blob([JSON.stringify(db,null,2)],{type:'application/json'});
-  downloadBlob(blob,`아콩이네_공동가계부_백업_${new Date().toISOString().slice(0,10)}.json`);
-}
-exportCsv.onclick=()=>{
-  const head=['날짜','유형','금액','카테고리','내용','결제한사람','연결계좌','받는계좌','메모'];
-  const rows=db.transactions.map(t=>[t.date,typeLabel(t.type),t.amount,t.category,t.memo,t.payer,db.accounts.find(a=>a.id===t.from)?.name||'',db.accounts.find(a=>a.id===t.to)?.name||'',t.note]);
-  const csv='\ufeff'+[head,...rows].map(r=>r.map(csvCell).join(',')).join('\n');
-  downloadBlob(new Blob([csv],{type:'text/csv;charset=utf-8'}),`아콩이네_공동가계부_거래_${new Date().toISOString().slice(0,10)}.csv`);
-}
-downloadCsvTemplate.onclick=()=>{
-  const head=['날짜','유형','금액','카테고리','내용','결제한사람','연결계좌','받는계좌','메모'];
-  const sample=['2026-08-21','지출','35000','장보기','마트 장보기','공동','공동생활비 통장','','예시 행은 삭제 후 사용'];
-  const csv='\ufeff'+[head,sample].map(r=>r.map(csvCell).join(',')).join('\n');
-  downloadBlob(new Blob([csv],{type:'text/csv;charset=utf-8'}),'아콩이네_공동가계부_CSV입력양식.csv');
-}
-function csvCell(v){return `"${String(v??'').replaceAll('"','""')}"`}
-function downloadBlob(blob,name){const u=URL.createObjectURL(blob),a=document.createElement('a');a.href=u;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(u),1000)}
+// ===== 데이터 관리 v1.6 =====
+let pendingCsvFile = null;
+let pendingJsonFile = null;
 
-importCsv.onchange=(e)=>{
-  pendingCsvFile=e.target.files[0]||null;
-  csvFileState.textContent=pendingCsvFile?`선택됨: ${pendingCsvFile.name}`:'';
+const elExportCsv = document.getElementById('exportCsv');
+const elImportCsv = document.getElementById('importCsv');
+const elApplyCsv = document.getElementById('applyCsv');
+const elCsvTemplate = document.getElementById('downloadCsvTemplate');
+const elCsvFileState = document.getElementById('csvFileState');
+
+const elExportJson = document.getElementById('exportJson');
+const elImportJson = document.getElementById('importJson');
+const elApplyJson = document.getElementById('applyJson');
+const elJsonFileState = document.getElementById('jsonFileState');
+const elDataManageStatus = document.getElementById('dataManageStatus');
+
+function setDataStatus(message){
+  if(elDataManageStatus) elDataManageStatus.textContent = message || '';
 }
-applyCsv.onclick=async()=>{
-  if(!pendingCsvFile){alert('먼저 CSV 파일을 선택해 주세요.');return}
+
+function csvCell(v){
+  return `"${String(v ?? '').replaceAll('"','""')}"`;
+}
+
+function safeFilename(name){
+  return String(name).replace(/[\\/:*?"<>|]/g, '_');
+}
+
+// Android / Samsung Internet / 설치형 PWA에서도 최대한 안정적으로 저장
+function downloadBlob(blob, filename){
   try{
-    const text=(await pendingCsvFile.text()).replace(/^\uFEFF/,'');
-    const rows=parseCsv(text);
-    if(rows.length<2) throw new Error('내용 없음');
-    const head=rows[0].map(x=>x.trim());
-    const required=['날짜','유형','금액','카테고리','내용','결제한사람','연결계좌','받는계좌','메모'];
-    if(!required.every(x=>head.includes(x))) throw new Error('양식 불일치');
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = safeFilename(filename);
+    a.style.display = 'none';
+    document.body.appendChild(a);
 
-    const idx=Object.fromEntries(head.map((h,i)=>[h,i]));
-    let added=0;
-    for(const r of rows.slice(1)){
-      if(!r.some(v=>String(v||'').trim())) continue;
-      const date=(r[idx['날짜']]||'').trim();
-      const amount=Number(String(r[idx['금액']]||'').replaceAll(',','').trim());
-      if(!/^\d{4}-\d{2}-\d{2}$/.test(date)||!amount) continue;
+    // 실제 DOM에 붙인 뒤 클릭해야 모바일 브라우저에서 더 안정적임
+    a.click();
 
-      const label=(r[idx['유형']]||'').trim();
-      const typeMap={'수입':'income','지출':'expense','자산이동':'transfer','부채상환':'debt','income':'income','expense':'expense','transfer':'transfer','debt':'debt'};
-      const type=typeMap[label]||'expense';
-      const fromName=(r[idx['연결계좌']]||'').trim();
-      const toName=(r[idx['받는계좌']]||'').trim();
-      const from=db.accounts.find(a=>a.name===fromName)?.id||'';
-      const to=db.accounts.find(a=>a.name===toName)?.id||'';
-
-      const t={
-        id:crypto.randomUUID(), type, date, amount,
-        category:(r[idx['카테고리']]||'').trim(),
-        memo:(r[idx['내용']]||'').trim(),
-        payer:(r[idx['결제한사람']]||'공동').trim()||'공동',
-        from,to,
-        note:(r[idx['메모']]||'').trim(),
-        created:Date.now()+added
-      };
-      db.transactions.push(t);
-      applyEffect(t);
-      added++;
-    }
-    if(!added) throw new Error('추가할 거래 없음');
-    save();
-    alert(`${added}건을 가져왔습니다.`);
-    pendingCsvFile=null; importCsv.value=''; csvFileState.textContent='';
+    setTimeout(()=>{
+      try{ document.body.removeChild(a); }catch(e){}
+      try{ URL.revokeObjectURL(url); }catch(e){}
+    }, 3000);
+    return true;
   }catch(err){
-    alert('CSV 파일이나 입력 양식을 확인해 주세요.');
+    console.error('downloadBlob error', err);
+    return false;
   }
 }
+
+function validateBackupData(x){
+  return !!(
+    x &&
+    typeof x === 'object' &&
+    typeof x.budget === 'number' &&
+    Array.isArray(x.categories) &&
+    Array.isArray(x.accounts) &&
+    Array.isArray(x.transactions)
+  );
+}
+
 function parseCsv(text){
-  const out=[]; let row=[], cell='', quoted=false;
+  const out=[];
+  let row=[], cell='', quoted=false;
   for(let i=0;i<text.length;i++){
     const ch=text[i], next=text[i+1];
-    if(ch==='"'){
-      if(quoted && next==='"'){cell+='"';i++}
-      else quoted=!quoted;
-    }else if(ch===',' && !quoted){row.push(cell);cell=''}
-    else if((ch==='\n'||ch==='\r')&&!quoted){
-      if(ch==='\r'&&next==='\n')i++;
-      row.push(cell);out.push(row);row=[];cell='';
-    }else cell+=ch;
+    if(ch === '"'){
+      if(quoted && next === '"'){ cell += '"'; i++; }
+      else quoted = !quoted;
+    }else if(ch === ',' && !quoted){
+      row.push(cell); cell='';
+    }else if((ch === '\n' || ch === '\r') && !quoted){
+      if(ch === '\r' && next === '\n') i++;
+      row.push(cell); out.push(row); row=[]; cell='';
+    }else{
+      cell += ch;
+    }
   }
-  if(cell.length||row.length){row.push(cell);out.push(row)}
+  if(cell.length || row.length){
+    row.push(cell); out.push(row);
+  }
   return out;
 }
 
-importJson.onchange=(e)=>{
-  pendingJsonFile=e.target.files[0]||null;
-  jsonFileState.textContent=pendingJsonFile?`선택됨: ${pendingJsonFile.name}`:'';
+// 1) CSV 내보내기
+if(elExportCsv){
+  elExportCsv.addEventListener('click', ()=>{
+    try{
+      const head=['날짜','유형','금액','카테고리','내용','결제한사람','연결계좌','받는계좌','메모'];
+      const rows=db.transactions.map(t=>[
+        t.date,
+        typeLabel(t.type),
+        t.amount,
+        t.category || '',
+        t.memo || '',
+        t.payer || '',
+        db.accounts.find(a=>a.id===t.from)?.name || '',
+        db.accounts.find(a=>a.id===t.to)?.name || '',
+        t.note || ''
+      ]);
+      const csv='\ufeff'+[head,...rows].map(r=>r.map(csvCell).join(',')).join('\r\n');
+      const ok=downloadBlob(
+        new Blob([csv], {type:'text/csv;charset=utf-8'}),
+        `아콩이네_공동가계부_거래_${new Date().toISOString().slice(0,10)}.csv`
+      );
+      setDataStatus(ok ? `CSV 내보내기를 시작했어요. (${rows.length}건)` : 'CSV 저장을 시작하지 못했습니다.');
+      if(!ok) alert('CSV 파일 저장을 시작하지 못했습니다.');
+    }catch(err){
+      console.error(err);
+      setDataStatus('CSV 내보내기 중 오류가 발생했습니다.');
+      alert('CSV 내보내기에 실패했습니다.');
+    }
+  });
 }
-applyJson.onclick=async()=>{
-  if(!pendingJsonFile){alert('먼저 JSON 백업 파일을 선택해 주세요.');return}
-  try{
-    const x=JSON.parse(await pendingJsonFile.text());
-    if(!Array.isArray(x.accounts)||!Array.isArray(x.transactions)) throw 0;
-    if(!confirm('현재 데이터를 선택한 백업 내용으로 교체할까요?')) return;
-    db=x;save();alert('복원했습니다.');
-    pendingJsonFile=null; importJson.value=''; jsonFileState.textContent='';
-  }catch{
-    alert('백업 파일을 확인해 주세요.');
+
+// 2) CSV 파일 선택
+if(elImportCsv){
+  elImportCsv.addEventListener('change', (e)=>{
+    pendingCsvFile = e.target.files && e.target.files[0] ? e.target.files[0] : null;
+    if(elCsvFileState){
+      elCsvFileState.textContent = pendingCsvFile ? `선택됨: ${pendingCsvFile.name}` : '';
+    }
+    setDataStatus(pendingCsvFile ? 'CSV 파일을 선택했어요. 아래 가져오기 버튼을 눌러주세요.' : '');
+  });
+}
+
+// 3) CSV 적용
+if(elApplyCsv){
+  elApplyCsv.addEventListener('click', async ()=>{
+    if(!pendingCsvFile){
+      alert('먼저 CSV 파일을 선택해 주세요.');
+      return;
+    }
+
+    try{
+      const text=(await pendingCsvFile.text()).replace(/^\uFEFF/,'');
+      const rows=parseCsv(text);
+      if(rows.length < 2) throw new Error('empty csv');
+
+      const head=rows[0].map(x=>String(x).trim());
+      const required=['날짜','유형','금액','카테고리','내용','결제한사람','연결계좌','받는계좌','메모'];
+      if(!required.every(x=>head.includes(x))) throw new Error('invalid headers');
+
+      const idx=Object.fromEntries(head.map((h,i)=>[h,i]));
+      const typeMap={
+        '수입':'income','지출':'expense','자산이동':'transfer','부채상환':'debt',
+        'income':'income','expense':'expense','transfer':'transfer','debt':'debt'
+      };
+
+      let added=0, skipped=0;
+
+      for(const r of rows.slice(1)){
+        if(!r.some(v=>String(v||'').trim())) continue;
+
+        const date=String(r[idx['날짜']]||'').trim();
+        const amount=Number(String(r[idx['금액']]||'').replaceAll(',','').trim());
+        if(!/^\d{4}-\d{2}-\d{2}$/.test(date) || !Number.isFinite(amount) || amount <= 0){
+          skipped++; continue;
+        }
+
+        const type=typeMap[String(r[idx['유형']]||'').trim()];
+        if(!type){ skipped++; continue; }
+
+        const fromName=String(r[idx['연결계좌']]||'').trim();
+        const toName=String(r[idx['받는계좌']]||'').trim();
+        const from=db.accounts.find(a=>a.name===fromName)?.id || '';
+        const to=db.accounts.find(a=>a.name===toName)?.id || '';
+
+        if((type==='transfer' || type==='debt') && (!from || !to)){
+          skipped++; continue;
+        }
+
+        const t={
+          id:crypto.randomUUID(),
+          type,
+          date,
+          amount,
+          category:String(r[idx['카테고리']]||'').trim(),
+          memo:String(r[idx['내용']]||'').trim(),
+          payer:String(r[idx['결제한사람']]||'공동').trim() || '공동',
+          from,
+          to,
+          note:String(r[idx['메모']]||'').trim(),
+          created:Date.now()+added
+        };
+
+        db.transactions.push(t);
+        applyEffect(t);
+        added++;
+      }
+
+      if(!added) throw new Error('no valid rows');
+      localStorage.setItem(KEY, JSON.stringify(db));
+      renderAll();
+
+      pendingCsvFile=null;
+      elImportCsv.value='';
+      if(elCsvFileState) elCsvFileState.textContent='';
+      setDataStatus(`CSV 가져오기 완료: ${added}건${skipped?` · 제외 ${skipped}건`:''}`);
+      alert(`${added}건을 가져왔습니다.${skipped?`\n${skipped}건은 형식 또는 연결계좌 문제로 제외됐습니다.`:''}`);
+    }catch(err){
+      console.error(err);
+      setDataStatus('CSV 가져오기에 실패했습니다.');
+      alert('CSV 파일 또는 입력 양식을 확인해 주세요.');
+    }
+  });
+}
+
+// 4) CSV 입력 양식
+if(elCsvTemplate){
+  elCsvTemplate.addEventListener('click', ()=>{
+    const head=['날짜','유형','금액','카테고리','내용','결제한사람','연결계좌','받는계좌','메모'];
+    const sample=['2026-08-21','지출','35000','장보기','마트 장보기','공동','공동생활비 통장','','예시 행은 삭제 후 사용'];
+    const csv='\ufeff'+[head,sample].map(r=>r.map(csvCell).join(',')).join('\r\n');
+    const ok=downloadBlob(
+      new Blob([csv], {type:'text/csv;charset=utf-8'}),
+      '아콩이네_공동가계부_CSV입력양식.csv'
+    );
+    setDataStatus(ok ? 'CSV 입력 양식 저장을 시작했어요.' : 'CSV 입력 양식을 저장하지 못했습니다.');
+    if(!ok) alert('CSV 입력 양식 저장에 실패했습니다.');
+  });
+}
+
+// 5) 전체 JSON 백업
+if(elExportJson){
+  elExportJson.addEventListener('click', ()=>{
+    try{
+      // 최신 앱의 실제 데이터 그대로 보관
+      const backup={
+        budget:Number(db.budget)||0,
+        categories:Array.isArray(db.categories)?db.categories:[],
+        accounts:Array.isArray(db.accounts)?db.accounts:[],
+        transactions:Array.isArray(db.transactions)?db.transactions:[]
+      };
+      const json=JSON.stringify(backup, null, 2);
+      const ok=downloadBlob(
+        new Blob([json], {type:'application/json;charset=utf-8'}),
+        `아콩이네_공동가계부_백업_${new Date().toISOString().slice(0,10)}.json`
+      );
+      setDataStatus(ok ? `JSON 전체 백업 저장을 시작했어요. (재산 ${backup.accounts.length}개 · 거래 ${backup.transactions.length}건)` : 'JSON 백업 저장을 시작하지 못했습니다.');
+      if(!ok) alert('JSON 백업 저장에 실패했습니다.');
+    }catch(err){
+      console.error(err);
+      setDataStatus('JSON 백업 중 오류가 발생했습니다.');
+      alert('JSON 백업에 실패했습니다.');
+    }
+  });
+}
+
+// 6) JSON 파일 선택 + 즉시 검증
+if(elImportJson){
+  elImportJson.addEventListener('change', async (e)=>{
+    const file=e.target.files && e.target.files[0] ? e.target.files[0] : null;
+    pendingJsonFile=file;
+
+    if(!file){
+      if(elJsonFileState) elJsonFileState.textContent='';
+      setDataStatus('');
+      return;
+    }
+
+    if(elJsonFileState) elJsonFileState.textContent=`선택됨: ${file.name}`;
+
+    try{
+      const parsed=JSON.parse(await file.text());
+      if(!validateBackupData(parsed)){
+        pendingJsonFile=null;
+        if(elJsonFileState) elJsonFileState.textContent='올바른 아콩이네 백업 파일이 아닙니다.';
+        setDataStatus('JSON 구조 검증 실패');
+        alert('이 파일은 현재 아콩이네 공동가계부의 JSON 형식과 맞지 않습니다.');
+        return;
+      }
+
+      if(elJsonFileState) elJsonFileState.textContent=`선택됨: ${file.name} · 복원 준비 완료`;
+      setDataStatus(`JSON 확인 완료: 재산 ${parsed.accounts.length}개 · 거래 ${parsed.transactions.length}건`);
+    }catch(err){
+      console.error(err);
+      pendingJsonFile=null;
+      if(elJsonFileState) elJsonFileState.textContent='JSON 파일을 읽을 수 없습니다.';
+      setDataStatus('JSON 파일 읽기 실패');
+      alert('JSON 파일을 읽을 수 없습니다.');
+    }
+  });
+}
+
+// 7) JSON 실제 복원
+if(elApplyJson){
+  elApplyJson.addEventListener('click', async ()=>{
+    if(!pendingJsonFile){
+      alert('먼저 JSON 백업 파일을 선택해 주세요.');
+      return;
+    }
+
+    try{
+      const x=JSON.parse(await pendingJsonFile.text());
+      if(!validateBackupData(x)) throw new Error('invalid json structure');
+
+      if(!confirm(
+        `선택한 백업으로 복원할까요?\n\n재산 ${x.accounts.length}개 · 거래 ${x.transactions.length}건\n현재 데이터는 선택한 백업 내용으로 교체됩니다.`
+      )) return;
+
+      db={
+        budget:Number(x.budget)||0,
+        categories:[...x.categories],
+        accounts:x.accounts.map(a=>({...a})),
+        transactions:x.transactions.map(t=>({...t}))
+      };
+
+      localStorage.setItem(KEY, JSON.stringify(db));
+      pendingJsonFile=null;
+      elImportJson.value='';
+      if(elJsonFileState) elJsonFileState.textContent='복원 완료';
+
+      viewDate=new Date();
+      selectedCalendarDate=null;
+      renderAll();
+
+      setDataStatus(`JSON 복원 완료: 재산 ${db.accounts.length}개 · 거래 ${db.transactions.length}건`);
+      alert('JSON 백업을 정상적으로 복원했습니다.');
+    }catch(err){
+      console.error(err);
+      setDataStatus('JSON 복원에 실패했습니다.');
+      alert('JSON 복원에 실패했습니다. 파일 형식을 확인해 주세요.');
+    }
+  });
+}
+
+
+
+const elResetAllData = document.getElementById('resetAllData');
+if(elResetAllData){
+  elResetAllData.addEventListener('click', ()=>{
+    if(!confirm('아콩이네 공동가계부의 모든 데이터를 초기화할까요?\n\n수익·지출, 재산, 초기자산, 카테고리, 예산 설정이 모두 삭제됩니다.')) return;
+    if(!confirm('정말 초기화할까요? 이 작업은 되돌릴 수 없습니다.\n필요하면 먼저 JSON 백업을 해주세요.')) return;
+
+    localStorage.removeItem(KEY);
+    db=structuredClone(defaults);
+    viewDate=new Date();
+    selectedCalendarDate=null;
+    localStorage.setItem(KEY, JSON.stringify(db));
+    renderAll();
+    setDataStatus('모든 데이터가 초기화되었습니다.');
+    alert('모든 데이터가 초기화되었습니다.');
+  });
+}
+
+
+
+function validateBackupData(x){
+  if(!x || typeof x!=='object') return false;
+  if(!Array.isArray(x.accounts)) return false;
+  if(!Array.isArray(x.transactions)) return false;
+  if(!Array.isArray(x.categories)) return false;
+  if(typeof x.budget!=='number') return false;
+  return true;
+}
+
+importJson.addEventListener('change', async (e)=>{
+  const file=e.target.files && e.target.files[0] ? e.target.files[0] : null;
+  pendingJsonFile=file;
+  if(!file){
+    if(jsonFileState) jsonFileState.textContent='';
+    return;
   }
-}
 
-resetData.onclick=()=>{
-  if(!confirm('모든 가계부 데이터를 초기화할까요?\n\n예산, 카테고리, 초기자산, 재산, 모든 거래가 삭제되고 기본 상태로 돌아갑니다.')) return;
-  db=structuredClone(defaults);
-  pendingCsvFile=null;
-  pendingJsonFile=null;
-  importCsv.value='';
-  importJson.value='';
-  csvFileState.textContent='';
-  jsonFileState.textContent='';
-  save();
-  alert('데이터를 초기화했습니다.');
-}
+  if(jsonFileState) jsonFileState.textContent=`선택됨: ${file.name}`;
 
+  try{
+    const text=await file.text();
+    const parsed=JSON.parse(text);
+    if(!validateBackupData(parsed)){
+      pendingJsonFile=null;
+      if(jsonFileState) jsonFileState.textContent='올바른 아콩이네 백업 파일이 아닙니다.';
+      alert('JSON 파일 구조를 확인해 주세요. 아콩이네 공동가계부 백업 파일만 복원할 수 있습니다.');
+      return;
+    }
+    // 파일 선택 단계에서는 검증만 하고 실제 복원은 버튼을 눌렀을 때 진행
+    if(jsonFileState) jsonFileState.textContent=`선택됨: ${file.name} · 복원 준비 완료`;
+  }catch(err){
+    pendingJsonFile=null;
+    if(jsonFileState) jsonFileState.textContent='JSON 파일을 읽을 수 없습니다.';
+    alert('JSON 파일을 읽을 수 없습니다. 파일을 다시 선택해 주세요.');
+  }
+});
 
-resetAllData.onclick=()=>{
-  if(!confirm('모든 데이터를 초기화할까요?\n수익·지출, 재산, 초기자산, 카테고리, 예산 설정이 모두 삭제됩니다.')) return;
-  if(!confirm('정말 초기화할까요? 이 작업은 되돌릴 수 없습니다.\n필요하면 먼저 JSON 백업을 해주세요.')) return;
-  localStorage.removeItem(KEY);
-  db=structuredClone(defaults);
-  viewDate=new Date();
-  selectedCalendarDate=null;
-  save();
-  alert('모든 데이터가 초기화되었습니다.');
-}
+applyJson.addEventListener('click', async ()=>{
+  if(!pendingJsonFile){
+    alert('먼저 JSON 백업 파일을 선택해 주세요.');
+    return;
+  }
+
+  try{
+    const text=await pendingJsonFile.text();
+    const x=JSON.parse(text);
+
+    if(!validateBackupData(x)){
+      throw new Error('invalid structure');
+    }
+
+    if(!confirm('현재 데이터를 선택한 백업 내용으로 교체할까요?\n이 작업 전에는 현재 데이터가 사라지므로 필요한 경우 먼저 백업해 주세요.')){
+      return;
+    }
+
+    // 안전하게 필요한 필드만 정규화
+    const restored={
+      budget:Number(x.budget)||0,
+      categories:Array.isArray(x.categories)?x.categories:[],
+      accounts:Array.isArray(x.accounts)?x.accounts:[],
+      transactions:Array.isArray(x.transactions)?x.transactions:[]
+    };
+
+    db=restored;
+    localStorage.setItem(KEY, JSON.stringify(db));
+
+    pendingJsonFile=null;
+    importJson.value='';
+    if(jsonFileState) jsonFileState.textContent='복원 완료';
+
+    renderAll();
+    alert('JSON 백업을 복원했습니다.');
+  }catch(err){
+    console.error(err);
+    alert('복원에 실패했습니다. JSON 파일 형식이나 데이터 구조를 확인해 주세요.');
+  }
+});
 
 if('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(()=>{});
 renderAll();
