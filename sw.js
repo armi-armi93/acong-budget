@@ -1,4 +1,4 @@
-const CACHE = 'akong-v1.3';
+const CACHE = 'akong-v1.4';
 const CORE = ['./', './index.html', './manifest.webmanifest'];
 
 self.addEventListener('install', event => {
