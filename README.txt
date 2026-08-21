@@ -1,8 +1,15 @@
-아콩이네 공동가계부🫛 version 1.7
+아콩이네 공동가계부🫛 version 2.1
 
-데이터 관리 전면 재작성
-- 이전 버전의 중복 JSON 이벤트 코드 완전 제거
-- CSV 내보내기/가져오기/양식 받기 재작성
-- JSON 백업/복원 재작성
-- Android 설치형 PWA에서 Web Share(File)를 우선 사용하고 일반 다운로드를 대체 수단으로 사용
+원인 수정
+- v1.3부터 실수로 삭제되어 있던 핵심 함수 복구
+  · renderSettings()
+  · populateSelects()
+  · openTx()
+  · editTx()
+  · updateTxTypeUI()
+  · openAccount()
+  · editAccount()
+- 이 누락 때문에 앱 실행 중 JavaScript가 중단되어 데이터 관리 버튼까지 실행되지 않던 문제 수정
+- v1.1에서 정상 동작했던 CSV/JSON 데이터 관리 코드는 그대로 유지
+- v1.3 이후 초기자산 기능 및 현재 UI 유지
 - 모든 데이터 초기화 유지
