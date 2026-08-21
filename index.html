@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no" />
   <meta name="theme-color" content="#f7f7f2" />
-  <title>아콩이네 공동가계부🫛 v1.2.1</title>
+  <title>아콩이네 공동가계부🫛 v1.2.2</title>
   <link rel="manifest" href="manifest.webmanifest" />
   <style>
     :root{
@@ -115,7 +115,7 @@
 <header>
   <div class="title-row">
     <h1>아콩이네 공동가계부🫛</h1>
-    <span class="version">version 1.2.1</span>
+    <span class="version">version 1.2.2</span>
   </div>
   <div class="month-nav">
     <button id="prevMonth">‹</button>
@@ -285,6 +285,16 @@
     </div>
 
     <div class="hint" style="padding:4px 2px 10px">데이터는 이 기기의 브라우저에 저장됩니다. 중요한 데이터는 정기적으로 JSON 백업해 주세요.</div>
+
+    <div class="data-card" style="margin-top:6px">
+      <div class="data-row">
+        <div>
+          <div class="data-title">데이터 초기화</div>
+          <div class="data-desc">예산·카테고리·초기자산·재산·모든 거래를 기본 상태로 되돌립니다.</div>
+        </div>
+        <button class="danger" id="resetData">초기화</button>
+      </div>
+    </div>
   </section>
 </main>
 
@@ -744,6 +754,19 @@ applyJson.onclick=async()=>{
   }catch{
     alert('백업 파일을 확인해 주세요.');
   }
+}
+
+resetData.onclick=()=>{
+  if(!confirm('모든 가계부 데이터를 초기화할까요?\n\n예산, 카테고리, 초기자산, 재산, 모든 거래가 삭제되고 기본 상태로 돌아갑니다.')) return;
+  db=structuredClone(defaults);
+  pendingCsvFile=null;
+  pendingJsonFile=null;
+  importCsv.value='';
+  importJson.value='';
+  csvFileState.textContent='';
+  jsonFileState.textContent='';
+  save();
+  alert('데이터를 초기화했습니다.');
 }
 
 if('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(()=>{});
