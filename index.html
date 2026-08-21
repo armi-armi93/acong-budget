@@ -769,7 +769,17 @@ resetData.onclick=()=>{
   alert('데이터를 초기화했습니다.');
 }
 
-if('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(()=>{});
+if('serviceWorker' in navigator) {
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (!window.__swReloaded) {
+      window.__swReloaded = true;
+      window.location.reload();
+    }
+  });
+  navigator.serviceWorker.register('./sw.js', {updateViaCache:'none'})
+    .then(reg => reg.update())
+    .catch(()=>{});
+}
 renderAll();
 </script>
 </body>
