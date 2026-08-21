@@ -1,715 +1,485 @@
 <!doctype html>
 <html lang="ko">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no" />
-  <meta name="theme-color" content="#f7f7f2" />
-  <title>아콩이네 공동가계부🫛 v2.1</title>
-  <link rel="manifest" href="manifest.webmanifest" />
-  <style>
-    :root{
-      --bg:#f7f7f2; --card:#fff; --text:#222; --muted:#777; --line:#e7e7df;
-      --accent:#3d6b52; --danger:#b94a48; --shadow:0 4px 18px rgba(0,0,0,.06);
-      --nav-h:72px;
-    }
-    *{box-sizing:border-box}
-    html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR",Segoe UI,sans-serif}
-    body{font-size:14px;overscroll-behavior-y:none}
-    button,input,select,textarea{font:inherit;font-size:16px}
-    button{cursor:pointer}
-    header{
-      position:sticky; top:0; z-index:20; background:rgba(247,247,242,.96);
-      backdrop-filter:blur(10px); padding:14px 16px 10px; border-bottom:1px solid var(--line)
-    }
-    .title-row{display:flex;align-items:center;justify-content:space-between;gap:12px}
-    h1{font-size:20px;margin:0;font-weight:800;white-space:nowrap}
-    .version{font-size:12px;color:var(--muted)}
-    .month-nav{display:flex;align-items:center;gap:8px;margin-top:10px}
-    .month-nav button{border:1px solid var(--line);background:#fff;border-radius:10px;padding:6px 10px}
-    .month-label{font-weight:700;min-width:112px;text-align:center}
-    main{padding:14px 14px calc(var(--nav-h) + 22px);max-width:820px;margin:auto}
-    section.tab{display:none}
-    section.tab.active{display:block}
-    .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
-    .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;box-shadow:var(--shadow)}
-    .kpi .label{font-size:12px;color:var(--muted);margin-bottom:6px}
-    .kpi .value{font-size:21px;font-weight:800;letter-spacing:-.4px}
-    .kpi .sub{font-size:12px;color:var(--muted);margin-top:4px}
-    .wide{grid-column:1/-1}
-    .section-title{display:flex;align-items:center;justify-content:space-between;margin:18px 2px 8px}
-    .section-title h2{font-size:15px;margin:0}
-    .section-title button,.ghost{border:1px solid var(--line);background:#fff;border-radius:10px;padding:7px 10px}
-    .primary{background:var(--accent);color:#fff;border:0;border-radius:12px;padding:10px 13px;font-weight:700}
-    .danger{background:#fff;color:var(--danger);border:1px solid #e9c8c7;border-radius:10px;padding:7px 10px}
-    .category-delete{padding:5px 8px;border-radius:8px;font-size:11px;line-height:1.15;min-width:auto}
-    .data-card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:14px;margin-bottom:10px;box-shadow:var(--shadow)}
-    .data-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:14px;align-items:center}
-    .data-title{font-size:14px;font-weight:800;margin-bottom:4px}
-    .data-desc{font-size:11px;color:var(--muted);line-height:1.45}
-    .data-action{
-      min-width:96px;border-radius:12px;padding:10px 13px;border:1px solid #d8d8d1;
-      background:#fff;color:var(--text);font-size:13px;font-weight:700;text-align:center
-    }
-    .data-action.dark{background:#222;color:#fff;border-color:#222}
-    .file-state{font-size:11px;color:var(--accent);margin-top:5px;word-break:break-all}
-    .progress{height:10px;border-radius:999px;background:#ecece5;overflow:hidden;margin-top:8px}
-    .progress > span{display:block;height:100%;background:var(--accent);width:0}
-    .list{display:flex;flex-direction:column;gap:8px}
-    .row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 0;border-bottom:1px solid var(--line)}
-    .row:last-child{border-bottom:0}
-    .row-main{min-width:0}
-    .row-title{font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-    .row-meta{font-size:12px;color:var(--muted);margin-top:3px}
-    .amt{font-weight:800;white-space:nowrap}
-    .amt.in{color:#257047}.amt.out{color:#9a3e3b}
-    .seg{display:flex;background:#eaeae3;border-radius:12px;padding:3px;gap:3px;margin-bottom:12px}
-    .seg button{flex:1;border:0;background:transparent;border-radius:9px;padding:8px;font-size:13px}
-    .seg button.active{background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.08);font-weight:700}
-    .toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
-    .toolbar input,.toolbar select{min-width:0;border:1px solid var(--line);background:#fff;border-radius:10px;padding:9px}
-    .toolbar input{flex:1}
-    .asset-group{margin-bottom:14px}
-    .asset-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
-    .asset-head strong{font-size:14px}
-    .asset-card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:10px 12px;margin-bottom:7px}
-    .bottom-nav{
-      position:fixed;left:0;right:0;bottom:0;z-index:50;height:var(--nav-h);
-      background:rgba(255,255,255,.96);backdrop-filter:blur(12px);border-top:1px solid var(--line);
-      display:flex;justify-content:space-around;padding-bottom:env(safe-area-inset-bottom)
-    }
-    .bottom-nav button{flex:1;border:0;background:transparent;font-size:11px;color:#666;padding:7px 2px 5px;display:flex;flex-direction:column;gap:4px;align-items:center;justify-content:center}
-    .bottom-nav button .ico{font-size:19px}
-    .bottom-nav button.active{color:var(--accent);font-weight:800}
-    dialog{border:0;border-radius:18px;padding:0;width:min(92vw,520px);max-height:88vh;overflow:auto;box-shadow:0 20px 70px rgba(0,0,0,.25)}
-    dialog::backdrop{background:rgba(0,0,0,.4)}
-    .modal{padding:16px}
-    .modal h3{margin:0 0 12px;font-size:18px}
-    .form{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-    .field{display:flex;flex-direction:column;gap:5px}
-    .field.full{grid-column:1/-1}
-    label{font-size:12px;color:var(--muted)}
-    input,select,textarea{border:1px solid var(--line);border-radius:10px;padding:10px;background:#fff;width:100%}
-    textarea{min-height:70px;resize:vertical}
-    .modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:14px}
-    .calendar-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
-    .dow{text-align:center;color:var(--muted);font-size:11px;padding:5px 0}
-    .day{min-height:72px;background:#fff;border:1px solid var(--line);border-radius:10px;padding:6px;overflow:hidden}
-    .day.muted{opacity:.4}
-    .day-num{font-size:11px;font-weight:700}
-    .day-amt{font-size:10px;margin-top:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-    .analysis-bars .bar-row{display:grid;grid-template-columns:90px 1fr 72px;gap:8px;align-items:center;margin:8px 0}
-    .bar-bg{height:9px;background:#ecece5;border-radius:99px;overflow:hidden}
-    .bar-fill{height:100%;background:var(--accent)}
-    .empty{color:var(--muted);font-size:13px;text-align:center;padding:20px 5px}
-    .hint{font-size:12px;color:var(--muted);line-height:1.55}
-    @media (max-width:560px){
-      .grid{grid-template-columns:1fr 1fr}
-      .form{grid-template-columns:1fr}
-      .field.full{grid-column:auto}
-      .calendar-grid{gap:3px}
-      .day{min-height:64px;padding:4px}
-    }
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#f6f7f2">
+<title>아콩이네 공동가계부🫛 v3.0</title>
+<link rel="manifest" href="manifest.webmanifest">
+<style>
+:root{
+  --bg:#f6f7f2;--card:#fff;--text:#222;--muted:#777;--line:#e6e7df;
+  --accent:#426c55;--accent-soft:#eaf1ec;--danger:#a44343;--nav:72px;
+  --shadow:0 4px 18px rgba(0,0,0,.055)
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR",Segoe UI,sans-serif}
+body{font-size:14px;overscroll-behavior-y:none}
+button,input,select,textarea{font:inherit;font-size:16px}
+button{cursor:pointer}
+header{position:sticky;top:0;z-index:20;background:rgba(246,247,242,.96);backdrop-filter:blur(12px);border-bottom:1px solid var(--line);padding:14px 15px 10px}
+.title-row{display:flex;justify-content:space-between;align-items:center;gap:10px}
+h1{font-size:20px;margin:0;white-space:nowrap}
+.version{font-size:11px;color:var(--muted)}
+.month-nav{display:flex;align-items:center;gap:7px;margin-top:10px}
+.month-nav button{border:1px solid var(--line);background:#fff;border-radius:10px;padding:6px 10px}
+.month-label{min-width:108px;text-align:center;font-weight:800}
+main{max-width:860px;margin:auto;padding:14px 14px calc(var(--nav) + 24px)}
+.tab{display:none}.tab.active{display:block}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;box-shadow:var(--shadow)}
+.wide{grid-column:1/-1}
+.kpi .label{font-size:12px;color:var(--muted);margin-bottom:5px}
+.kpi .value{font-size:21px;font-weight:850;letter-spacing:-.4px}
+.kpi .sub{font-size:11px;color:var(--muted);margin-top:5px;line-height:1.4}
+.hero{padding:18px}
+.hero .label{font-size:12px;color:var(--muted)}
+.hero .value{font-size:29px;font-weight:900;margin-top:5px}
+.delta.up{color:#2b6f4b}.delta.down{color:#a04646}
+.section-title{display:flex;justify-content:space-between;align-items:center;margin:18px 2px 8px;gap:8px}
+.section-title h2{font-size:15px;margin:0}
+.primary,.ghost,.danger{border-radius:11px;padding:8px 11px;font-weight:750}
+.primary{background:var(--accent);color:#fff;border:0}
+.ghost{background:#fff;border:1px solid var(--line);color:var(--text)}
+.danger{background:#fff;border:1px solid #e6c3c3;color:var(--danger)}
+.list{display:flex;flex-direction:column;gap:0}
+.row{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--line)}
+.row:last-child{border-bottom:0}
+.row-main{min-width:0}
+.row-title{font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row-meta{font-size:11px;color:var(--muted);margin-top:3px;line-height:1.4}
+.amt{font-weight:850;white-space:nowrap}.amt.plus{color:#2b6f4b}.amt.minus{color:#a04646}
+.asset-chip{display:inline-block;font-size:10px;color:var(--accent);background:var(--accent-soft);border-radius:999px;padding:2px 6px;margin-left:5px}
+.progress{height:8px;background:#eceee8;border-radius:99px;overflow:hidden;margin-top:8px}.progress span{display:block;height:100%;background:var(--accent)}
+.bottom-nav{position:fixed;left:0;right:0;bottom:0;z-index:60;height:var(--nav);display:flex;background:rgba(255,255,255,.97);backdrop-filter:blur(12px);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom)}
+.bottom-nav button{flex:1;border:0;background:transparent;color:#666;font-size:10.5px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:5px 0}
+.bottom-nav .ico{font-size:19px}.bottom-nav button.active{color:var(--accent);font-weight:850}
+.form-card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:14px;margin-bottom:10px}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.field{display:flex;flex-direction:column;gap:5px}.field.full{grid-column:1/-1}
+label{font-size:11px;color:var(--muted)}
+input,select,textarea{width:100%;border:1px solid var(--line);background:#fff;border-radius:10px;padding:10px}
+textarea{min-height:65px;resize:vertical}
+.dist-head{display:grid;grid-template-columns:1fr 115px 34px;gap:6px;font-size:11px;color:var(--muted);padding:0 3px 5px}
+.dist-row{display:grid;grid-template-columns:1fr 115px 34px;gap:6px;align-items:center;margin-bottom:6px}
+.dist-row select,.dist-row input{font-size:14px;padding:9px}
+.icon-btn{border:1px solid var(--line);background:#fff;border-radius:9px;height:38px}
+.dist-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:10px}
+.mini{background:#f7f8f4;border-radius:12px;padding:10px}.mini .t{font-size:10px;color:var(--muted)}.mini .v{font-weight:850;margin-top:3px}
+.tag{font-size:10px;border-radius:999px;background:#f1f2ed;padding:3px 7px;color:#666}
+.empty{text-align:center;color:var(--muted);padding:20px 5px;font-size:12px}
+.data-card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:14px;margin-bottom:9px}
+.data-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:center}
+.data-title{font-weight:850;font-size:13px;margin-bottom:3px}.data-desc{font-size:11px;color:var(--muted);line-height:1.4}
+.data-action{min-width:92px;border:1px solid var(--line);background:#fff;border-radius:11px;padding:9px 11px;font-size:12px;font-weight:800}
+.data-action.dark{background:#222;color:#fff;border-color:#222}
+.status{font-size:11px;color:var(--accent);min-height:17px;padding:2px 2px 7px}
+dialog{border:0;border-radius:18px;padding:0;width:min(92vw,520px);max-height:88vh;overflow:auto;box-shadow:0 20px 70px rgba(0,0,0,.25)}
+dialog::backdrop{background:rgba(0,0,0,.42)}
+.modal{padding:16px}.modal h3{margin:0 0 12px;font-size:18px}.modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:13px}
+@media(max-width:600px){.form-grid{grid-template-columns:1fr}.field.full{grid-column:auto}.dist-head,.dist-row{grid-template-columns:1fr 105px 34px}.grid{gap:8px}}
+</style>
 </head>
 <body>
 <header>
   <div class="title-row">
     <h1>아콩이네 공동가계부🫛</h1>
-    <span class="version">version 2.1</span>
+    <span class="version">version 3.0</span>
   </div>
   <div class="month-nav">
     <button id="prevMonth">‹</button>
-    <div class="month-label" id="monthLabel"></div>
+    <div id="monthLabel" class="month-label"></div>
     <button id="nextMonth">›</button>
     <button id="todayBtn" style="margin-left:auto">이번 달</button>
   </div>
 </header>
 
 <main>
-  <section id="home" class="tab active">
-    <div class="grid">
-      <div class="card kpi">
-        <div class="label">월 생활비 예산</div><div class="value" id="kBudget">0원</div>
-        <div class="progress"><span id="budgetProgress"></span></div>
-        <div class="sub" id="kBudgetSub">사용 0원 · 남음 0원</div>
-      </div>
-      <div class="card kpi">
-        <div class="label">이번 달 수입</div><div class="value" id="kIncome">0원</div>
-        <div class="sub">공동 자금으로 들어온 금액</div>
-      </div>
-      <div class="card kpi">
-        <div class="label">이번 달 지출</div><div class="value" id="kExpense">0원</div>
-        <div class="sub">자산이동·부채상환 제외</div>
-      </div>
-      <div class="card kpi">
-        <div class="label">공동 순자산</div><div class="value" id="kNet">0원</div>
-        <div class="sub" id="kNetSub">자산 0원 · 부채 0원</div>
-      </div>
-    </div>
-    <div class="section-title"><h2>최근 거래</h2><button onclick="openTx()">+ 거래 추가</button></div>
-    <div class="card"><div id="recentList" class="list"></div></div>
-  </section>
+<section id="home" class="tab active">
+  <div class="card hero">
+    <div class="label">현재 공동 순자산</div>
+    <div class="value" id="homeNet">0원</div>
+    <div class="sub" id="homeDelta">전월 기록 없음</div>
+  </div>
 
-  <section id="transactions" class="tab">
-    <div class="seg">
-      <button class="active" data-txfilter="all">전체</button>
-      <button data-txfilter="income">수입</button>
-      <button data-txfilter="expense">지출</button>
-      <button data-txfilter="transfer">자산이동</button>
-      <button data-txfilter="debt">부채상환</button>
-    </div>
-    <div class="toolbar">
-      <input id="searchInput" placeholder="내용 검색" autocomplete="off" />
-      <select id="categoryFilter"><option value="">모든 카테고리</option></select>
-      <button class="primary" onclick="openTx()">+ 추가</button>
-    </div>
-    <div class="card"><div id="txList" class="list"></div></div>
-  </section>
+  <div class="section-title"><h2>이번 달 요약</h2></div>
+  <div class="grid">
+    <div class="card kpi"><div class="label">총수입</div><div class="value" id="homeIncome">0원</div></div>
+    <div class="card kpi"><div class="label">생활비성 지출</div><div class="value" id="homeExpense">0원</div></div>
+    <div class="card kpi"><div class="label">저축·적립</div><div class="value" id="homeSaving">0원</div></div>
+    <div class="card kpi"><div class="label">자산사용</div><div class="value" id="homeAssetUse">0원</div></div>
+  </div>
 
-  <section id="assets" class="tab">
-    <div class="grid">
-      <div class="card kpi"><div class="label">총자산</div><div class="value" id="aAssets">0원</div></div>
-      <div class="card kpi"><div class="label">총부채</div><div class="value" id="aLiabs">0원</div></div>
-      <div class="card kpi wide"><div class="label">공동 순자산</div><div class="value" id="aNet">0원</div></div>
-    </div>
-    <div class="section-title"><h2>재산 목록</h2><div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">
-      <button onclick="openInitialAsset()">+ 초기자산</button>
-      <button onclick="openAccount()">+ 계좌/재산 추가</button>
-    </div></div>
-    <div id="assetGroups"></div>
-    <div class="card hint">거래를 등록할 때 연결 계좌·카드를 선택하면 잔액이 자동으로 반영돼요. 계좌 간 이동은 지출이 아니라 ‘자산이동’으로 기록됩니다.</div>
-  </section>
+  <div class="section-title"><h2>현재 재산</h2><button class="ghost" onclick="goTab('assets')">전체보기</button></div>
+  <div class="card"><div id="homeAssets" class="list"></div></div>
 
-  <section id="settings" class="tab">
-    <div class="section-title"><h2>월 예산</h2></div>
-    <div class="card">
-      <div class="field"><label>공동 생활비 월 예산</label><input id="budgetInput" inputmode="numeric" /></div>
-      <div style="margin-top:10px"><button class="primary" id="saveBudget">저장</button></div>
-    </div>
-    <div class="section-title"><h2>카테고리 관리</h2></div>
-    <div class="card">
-      <div class="toolbar"><input id="newCategory" placeholder="새 카테고리" /><button class="primary" id="addCategory">추가</button></div>
-      <div id="categoryList" class="list"></div>
-    </div>
-    <div class="section-title"><h2>데이터 관리</h2></div>
+  <div class="section-title"><h2>최근 자산 변동</h2></div>
+  <div class="card"><div id="homeChanges" class="list"></div></div>
+</section>
 
-    <div class="data-card">
-      <div class="data-row">
-        <div>
-          <div class="data-title">CSV 내보내기</div>
-          <div class="data-desc">전체 수익·지출 내역을 CSV로 저장해요.</div>
-        </div>
-        <button class="data-action dark" id="exportCsv">내보내기</button>
-      </div>
-    </div>
+<section id="distribution" class="tab">
+  <div class="section-title">
+    <h2>월급분배</h2>
+    <button class="ghost" id="copyPrev">전월 분배 불러오기</button>
+  </div>
 
-    <div class="data-card">
-      <div class="data-row">
-        <div>
-          <div class="data-title">CSV 가져오기</div>
-          <div class="data-desc">양식에 맞춘 수익·지출 내역을 선택해요.</div>
-          <div class="file-state" id="csvFileState"></div>
-        </div>
-        <label class="data-action">파일 선택<input id="importCsv" type="file" accept=".csv,text/csv" hidden></label>
-      </div>
+  <div class="form-card">
+    <div class="form-grid">
+      <div class="field"><label>태환 수입</label><input id="incomeTaehwan" type="number" min="0" inputmode="numeric" placeholder="0"></div>
+      <div class="field"><label>아름 수입</label><input id="incomeAreum" type="number" min="0" inputmode="numeric" placeholder="0"></div>
+      <div class="field full"><label>기타 수입</label><input id="incomeOther" type="number" min="0" inputmode="numeric" placeholder="0"></div>
     </div>
+  </div>
 
-    <div class="data-card">
-      <div class="data-row">
-        <div>
-          <div class="data-title">선택한 CSV 적용</div>
-          <div class="data-desc">선택한 파일의 내역을 현재 데이터에 추가해요.</div>
-        </div>
-        <button class="data-action dark" id="applyCsv">가져오기</button>
-      </div>
+  <div class="section-title"><h2>생활비성 지출</h2><button class="ghost" id="addExpenseRow">+ 항목</button></div>
+  <div class="form-card">
+    <div class="dist-head"><span>항목</span><span>금액</span><span></span></div>
+    <div id="expenseRows"></div>
+  </div>
+
+  <div class="section-title"><h2>저축·적립</h2><button class="ghost" id="addSavingRow">+ 항목</button></div>
+  <div class="form-card">
+    <div class="dist-head"><span>적립할 재산</span><span>금액</span><span></span></div>
+    <div id="savingRows"></div>
+    <div class="dist-summary">
+      <div class="mini"><div class="t">총수입</div><div class="v" id="distIncome">0원</div></div>
+      <div class="mini"><div class="t">생활비</div><div class="v" id="distExpense">0원</div></div>
+      <div class="mini"><div class="t">저축·적립</div><div class="v" id="distSaving">0원</div></div>
     </div>
+  </div>
 
-    <div class="data-card">
-      <div class="data-row">
-        <div>
-          <div class="data-title">CSV 입력 양식</div>
-          <div class="data-desc">가져오기용 기본 양식을 받아요.</div>
-        </div>
-        <button class="data-action dark" id="downloadCsvTemplate">양식 받기</button>
-      </div>
-    </div>
+  <div style="display:flex;gap:8px">
+    <button class="primary" id="saveDistribution" style="flex:1">이번 달 분배 저장</button>
+    <button class="danger" id="deleteDistribution">이달 기록 삭제</button>
+  </div>
+  <div class="status" id="distStatus"></div>
+</section>
 
-    <div class="data-card">
-      <div class="data-row">
-        <div>
-          <div class="data-title">전체 JSON 백업</div>
-          <div class="data-desc">설정·카테고리·초기자산·재산·모든 거래를 한 번에 보관해요.</div>
-        </div>
-        <button class="data-action dark" id="exportJson">백업</button>
-      </div>
-    </div>
+<section id="assets" class="tab">
+  <div class="grid">
+    <div class="card kpi wide"><div class="label">현재 공동 순자산</div><div class="value" id="assetTotal">0원</div></div>
+  </div>
+  <div class="section-title"><h2>재산 목록</h2><div style="display:flex;gap:6px"><button class="ghost" id="openInitialAsset">+ 초기자산</button><button class="ghost" id="openAsset">+ 재산</button></div></div>
+  <div id="assetList"></div>
+</section>
 
-    <div class="data-card">
-      <div class="data-row">
-        <div>
-          <div class="data-title">JSON 복원</div>
-          <div class="data-desc">이전에 저장한 전체 백업 파일을 선택해요.</div>
-          <div class="file-state" id="jsonFileState"></div>
-        </div>
-        <label class="data-action">파일 선택<input id="importJson" type="file" accept=".json,application/json" hidden></label>
-      </div>
-    </div>
+<section id="assetUse" class="tab">
+  <div class="section-title"><h2>자산사용</h2><button class="primary" id="openUse">+ 사용 기록</button></div>
+  <div class="card" style="margin-bottom:10px">
+    <div class="row-meta" style="font-size:12px;line-height:1.6">비상금·목적자금 등 현재 보유 재산에서 실제로 돈을 꺼내 썼을 때만 기록해요. 기록하면 해당 자산과 전체 순자산에서 바로 차감됩니다.</div>
+  </div>
+  <div class="card"><div id="useList" class="list"></div></div>
+</section>
 
-    <div class="data-card">
-      <div class="data-row">
-        <div>
-          <div class="data-title">선택한 백업 복원</div>
-          <div class="data-desc">현재 데이터가 선택한 백업 내용으로 교체됩니다.</div>
-        </div>
-        <button class="data-action dark" id="applyJson">복원</button>
-      </div>
-    </div>
+<section id="history" class="tab">
+  <div class="section-title"><h2>월별 기록</h2></div>
+  <div id="historyList"></div>
+</section>
 
-    <div class="hint" style="padding:4px 2px 10px">데이터는 이 기기의 브라우저에 저장됩니다. 중요한 데이터는 정기적으로 JSON 백업해 주세요.</div>
+<section id="settings" class="tab">
+  <div class="section-title"><h2>생활비 카테고리</h2></div>
+  <div class="card">
+    <div style="display:flex;gap:7px;margin-bottom:8px"><input id="newCategory" placeholder="새 카테고리"><button class="primary" id="addCategory">추가</button></div>
+    <div id="categoryList" class="list"></div>
+  </div>
 
-    <div class="data-card" style="margin-top:6px">
-      <div class="data-row">
-        <div>
-          <div class="data-title">모든 데이터 초기화</div>
-          <div class="data-desc">수익·지출, 재산, 초기자산, 카테고리, 예산 설정을 모두 삭제하고 처음 상태로 되돌립니다.</div>
-        </div>
-        <button class="danger" id="resetData">모두 초기화</button>
-      </div>
-    </div>
-  </section>
+  <div class="section-title"><h2>데이터 관리</h2></div>
+  <div class="data-card"><div class="data-row"><div><div class="data-title">JSON 전체 백업</div><div class="data-desc">재산·월급분배·자산사용·설정을 모두 저장해요.</div></div><button class="data-action dark" id="exportJson">백업</button></div></div>
+  <div class="data-card"><div class="data-row"><div><div class="data-title">JSON 복원</div><div class="data-desc">이전에 저장한 백업 파일을 선택해요.</div><div id="jsonFileState" class="status"></div></div><label class="data-action">파일 선택<input id="importJson" type="file" accept=".json,application/json" hidden></label></div></div>
+  <div class="data-card"><div class="data-row"><div><div class="data-title">선택한 백업 복원</div><div class="data-desc">현재 데이터를 선택한 백업 내용으로 교체합니다.</div></div><button class="data-action dark" id="applyJson">복원</button></div></div>
+  <div class="data-card"><div class="data-row"><div><div class="data-title">월별 기록 CSV</div><div class="data-desc">월급분배와 자산사용 내역을 CSV로 저장해요.</div></div><button class="data-action dark" id="exportCsv">내보내기</button></div></div>
+  <div id="dataStatus" class="status"></div>
+
+  <div class="section-title"><h2>모든 데이터 초기화</h2></div>
+  <div class="data-card"><div class="data-row"><div><div class="data-title" style="color:var(--danger)">모든 데이터 초기화</div><div class="data-desc">재산·월급분배·자산사용·카테고리를 처음 상태로 되돌립니다.</div></div><button class="danger" id="resetAll">초기화</button></div></div>
+</section>
 </main>
 
 <nav class="bottom-nav">
   <button class="active" data-tab="home"><span class="ico">🏠</span>홈</button>
-  <button data-tab="transactions"><span class="ico">💸</span>수익·지출</button>
+  <button data-tab="distribution"><span class="ico">💰</span>월급분배</button>
   <button data-tab="assets"><span class="ico">🏦</span>재산</button>
+  <button data-tab="assetUse"><span class="ico">💸</span>자산사용</button>
+  <button data-tab="history"><span class="ico">🗂️</span>기록</button>
   <button data-tab="settings"><span class="ico">⚙️</span>설정</button>
 </nav>
 
-<dialog id="txDialog"><div class="modal">
-  <h3 id="txModalTitle">거래 추가</h3>
-  <form id="txForm" class="form">
-    <input type="hidden" id="txId" />
-    <div class="field"><label>거래유형</label>
-      <select id="txType">
-        <option value="expense">지출</option><option value="income">수입</option>
-        <option value="transfer">자산이동</option><option value="debt">부채상환</option>
-      </select>
-    </div>
-    <div class="field"><label>날짜</label><input id="txDate" type="date" required /></div>
-    <div class="field"><label>금액</label><input id="txAmount" type="number" min="0" step="1" inputmode="numeric" required /></div>
-    <div class="field"><label>카테고리</label><select id="txCategory"></select></div>
-    <div class="field full"><label>내용</label><input id="txMemo" placeholder="예: 장보기, 월급, 적금이체" /></div>
-    <div class="field"><label id="fromLabel">연결 계좌/카드</label><select id="txFrom"></select></div>
-    <div class="field" id="toWrap" style="display:none"><label>받는 계좌/부채</label><select id="txTo"></select></div>
-    <div class="field"><label>결제한 사람</label><select id="txPayer"><option>공동</option><option>아름</option><option>배우자</option></select></div>
-    <div class="field full"><label>메모</label><textarea id="txNote"></textarea></div>
-  </form>
-  <div class="modal-actions">
-    <button class="ghost" onclick="txDialog.close()">취소</button>
-    <button class="primary" id="saveTx">저장</button>
+<dialog id="assetDialog"><div class="modal">
+  <h3 id="assetDialogTitle">재산 추가</h3>
+  <div class="form-grid">
+    <input id="assetId" type="hidden">
+    <div class="field"><label>재산명</label><input id="assetName" placeholder="예: 비상금"></div>
+    <div class="field"><label>종류</label><select id="assetType"><option value="bank">통장</option><option value="saving">저축·적금</option><option value="purpose">목적자금</option><option value="investment">투자</option><option value="cash">현금</option><option value="other">기타</option></select></div>
+    <div class="field"><label>현재 금액</label><input id="assetBalance" type="number" inputmode="numeric"></div>
+    <div class="field"><label>목적</label><input id="assetPurpose" placeholder="예: 비상금, 여행, 장기저축"></div>
+    <div class="field full"><label>메모</label><input id="assetMemo"></div>
   </div>
+  <div class="modal-actions"><button class="ghost" onclick="assetDialog.close()">취소</button><button class="primary" id="saveAsset">저장</button></div>
 </div></dialog>
 
-
-<dialog id="initialAssetDialog"><div class="modal">
+<dialog id="initialDialog"><div class="modal">
   <h3>초기자산 등록</h3>
-  <div class="form">
-    <div class="field"><label>기준일</label><input id="initialDate" type="date" /></div>
-    <div class="field"><label>자산명</label><input id="initialName" placeholder="예: 비상금, 토스, 청년도약계좌" /></div>
-    <div class="field"><label>종류</label>
-      <select id="initialType">
-        <option value="bank">통장</option><option value="cash">현금</option><option value="saving">예·적금</option>
-        <option value="investment">투자</option><option value="deposit">보증금/기타자산</option>
-        <option value="card">카드 미결제금</option><option value="loan">대출/기타부채</option>
-      </select>
-    </div>
-    <div class="field"><label>초기금액</label><input id="initialAmount" type="number" step="1" inputmode="numeric" /></div>
-    <div class="field full"><label>메모</label><input id="initialMemo" placeholder="예: 2026-08-20 정산 전 잔액" /></div>
+  <div class="form-grid">
+    <div class="field"><label>기준일</label><input id="initialDate" type="date"></div>
+    <div class="field"><label>재산명</label><input id="initialName"></div>
+    <div class="field"><label>종류</label><select id="initialType"><option value="bank">통장</option><option value="saving">저축·적금</option><option value="purpose">목적자금</option><option value="investment">투자</option><option value="cash">현금</option><option value="other">기타</option></select></div>
+    <div class="field"><label>초기금액</label><input id="initialAmount" type="number" inputmode="numeric"></div>
+    <div class="field"><label>목적</label><input id="initialPurpose"></div>
+    <div class="field"><label>메모</label><input id="initialMemo"></div>
   </div>
-  <div class="hint" style="margin-top:10px">초기자산은 기존에 보유하고 있던 재산을 등록하는 기능입니다. 수입·지출 내역에는 포함되지 않고 재산에만 반영됩니다.</div>
-  <div class="modal-actions">
-    <button class="ghost" onclick="initialAssetDialog.close()">취소</button>
-    <button class="primary" id="saveInitialAsset">등록</button>
-  </div>
+  <div class="row-meta" style="margin-top:9px">초기자산은 수입으로 잡히지 않고 재산에만 반영됩니다.</div>
+  <div class="modal-actions"><button class="ghost" onclick="initialDialog.close()">취소</button><button class="primary" id="saveInitial">등록</button></div>
 </div></dialog>
 
-<dialog id="accountDialog"><div class="modal">
-  <h3 id="accountTitle">계좌/재산 추가</h3>
-  <div class="form">
-    <input type="hidden" id="accountId" />
-    <div class="field"><label>이름</label><input id="accountName" placeholder="예: 공동생활비 통장" /></div>
-    <div class="field"><label>종류</label>
-      <select id="accountType">
-        <option value="bank">통장</option><option value="cash">현금</option><option value="saving">예·적금</option>
-        <option value="investment">투자</option><option value="deposit">보증금/기타자산</option>
-        <option value="card">카드 미결제금</option><option value="loan">대출/기타부채</option>
-      </select>
-    </div>
-    <div class="field"><label>현재 잔액</label><input id="accountBalance" type="number" step="1" inputmode="numeric" /></div>
-    <div class="field"><label>메모</label><input id="accountMemo" /></div>
+<dialog id="useDialog"><div class="modal">
+  <h3 id="useDialogTitle">자산사용 기록</h3>
+  <div class="form-grid">
+    <input id="useId" type="hidden">
+    <div class="field"><label>날짜</label><input id="useDate" type="date"></div>
+    <div class="field"><label>사용한 재산</label><select id="useAsset"></select></div>
+    <div class="field"><label>금액</label><input id="useAmount" type="number" min="0" inputmode="numeric"></div>
+    <div class="field"><label>카테고리</label><select id="useCategory"></select></div>
+    <div class="field full"><label>내용</label><input id="useMemo" placeholder="예: 병원비, 가전 수리"></div>
   </div>
-  <div class="modal-actions">
-    <button class="ghost" onclick="accountDialog.close()">취소</button>
-    <button class="primary" id="saveAccount">저장</button>
-  </div>
+  <div class="modal-actions"><button class="ghost" onclick="useDialog.close()">취소</button><button class="primary" id="saveUse">저장</button></div>
 </div></dialog>
 
 <script>
-const KEY='akong_joint_v1';
-const defaults={
-  budget:1500000,
-  categories:['식비','장보기','외식','카페·간식','생활용품','교통','주거','통신','보험','의료','문화·여가','경조사','여행','급여','기타수입','저축','기타'],
-  accounts:[
-    {id:crypto.randomUUID(),name:'공동생활비 통장',type:'bank',balance:0,memo:''},
-    {id:crypto.randomUUID(),name:'공동카드',type:'card',balance:0,memo:'카드 미결제금'}
-  ],
-  transactions:[]
-};
+const $=id=>document.getElementById(id);
+const KEY='akong_joint_v3';
+function uid(){try{if(crypto&&crypto.randomUUID)return crypto.randomUUID()}catch(e){} return 'id-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,10)}
+const DEFAULT_CATS=['주거','생활비','용돈','기름','공과금','보험','의료','경조사','여행','기타'];
+const defaults={version:3,categories:[...DEFAULT_CATS],assets:[],distributions:{},assetUses:[],snapshots:{}};
 let db=load();
 let viewDate=new Date();
-let txFilter='all';
-let selectedCalendarDate=null;
+let pendingJson=null;
 
 function load(){
+  let x;
+  try{x=JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){}
+  if(x&&x.version===3)return normalize(x);
+  // v2.1/구버전 데이터 자동 가져오기
   try{
-    const raw=localStorage.getItem(KEY);
-    if(!raw) return structuredClone(defaults);
-    const x=JSON.parse(raw);
-    return {...structuredClone(defaults),...x};
-  }catch(e){return structuredClone(defaults)}
+    const old=JSON.parse(localStorage.getItem('akong_joint_v1')||'null');
+    if(old){
+      const hiddenNames=['공동생활비 통장','공동카드'];
+      const assets=(old.accounts||[]).filter(a=>!hiddenNames.includes(a.name)).map(a=>({
+        id:a.id||uid(),name:a.name,type:mapOldType(a.type),balance:Number(a.balance)||0,
+        purpose:a.purpose||'',memo:a.memo||'',initialAsset:!!a.initialAsset,
+        initialDate:a.initialDate||'',initialAmount:Number(a.initialAmount)||0
+      }));
+      return normalize({version:3,categories:old.categories?.length?old.categories:[...DEFAULT_CATS],assets,distributions:{},assetUses:[],snapshots:{}});
+    }
+  }catch(e){}
+  return structuredClone(defaults);
 }
-function save(){localStorage.setItem(KEY,JSON.stringify(db));renderAll()}
+function normalize(x){
+  return {
+    version:3,
+    categories:Array.isArray(x.categories)?x.categories:[...DEFAULT_CATS],
+    assets:Array.isArray(x.assets)?x.assets:[],
+    distributions:x.distributions&&typeof x.distributions==='object'?x.distributions:{},
+    assetUses:Array.isArray(x.assetUses)?x.assetUses:[],
+    snapshots:x.snapshots&&typeof x.snapshots==='object'?x.snapshots:{}
+  }
+}
+function mapOldType(t){return ({bank:'bank',cash:'cash',saving:'saving',investment:'investment',deposit:'purpose'})[t]||'other'}
+function persist(){localStorage.setItem(KEY,JSON.stringify(db));renderAll()}
 function won(n){return Math.round(Number(n)||0).toLocaleString('ko-KR')+'원'}
-function ym(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')}
-function isLiability(a){return ['card','loan'].includes(a.type)}
-function typeLabel(t){return ({expense:'지출',income:'수입',transfer:'자산이동',debt:'부채상환'})[t]||t}
-function accTypeLabel(t){return ({bank:'통장',cash:'현금',saving:'예·적금',investment:'투자',deposit:'보증금/기타자산',card:'카드 미결제금',loan:'대출/기타부채'})[t]||t}
-function monthTx(offset=0){
-  const d=new Date(viewDate.getFullYear(),viewDate.getMonth()+offset,1);
-  const key=ym(d);
-  return db.transactions.filter(t=>t.date.startsWith(key));
+function monthKey(d=viewDate){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')}
+function prevMonthKey(){const d=new Date(viewDate.getFullYear(),viewDate.getMonth()-1,1);return monthKey(d)}
+function currentNet(){return db.assets.reduce((s,a)=>s+Number(a.balance||0),0)}
+function sum(arr,fn){return arr.reduce((s,x)=>s+Number(fn(x)||0),0)}
+function distFor(key=monthKey()){return db.distributions[key]||{income:{taehwan:0,areum:0,other:0},expenses:[],savings:[],savedAt:null}}
+function monthUses(key=monthKey()){return db.assetUses.filter(u=>u.date&&u.date.startsWith(key))}
+function assetTypeLabel(t){return ({bank:'통장',saving:'저축·적금',purpose:'목적자금',investment:'투자',cash:'현금',other:'기타'})[t]||t}
+function escapeHtml(s=''){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
+
+function goTab(id){
+  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+  document.querySelectorAll('.bottom-nav button').forEach(x=>x.classList.toggle('active',x.dataset.tab===id));
+  $(id).classList.add('active'); window.scrollTo(0,0);
 }
-function totals(tx=monthTx()){
-  const income=tx.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
-  const expense=tx.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
-  return {income,expense};
-}
-function assetTotals(){
-  let assets=0,liabs=0;
-  db.accounts.forEach(a=> isLiability(a)? liabs+=Math.max(0,a.balance):assets+=a.balance);
-  return {assets,liabs,net:assets-liabs}
-}
-function changeAccountBalance(a,delta){
-  if(!a) return;
-  a.balance = Math.round((Number(a.balance)||0)+delta);
-}
-function reverseEffect(t){
-  const from=db.accounts.find(a=>a.id===t.from), to=db.accounts.find(a=>a.id===t.to);
-  const amt=t.amount;
-  if(t.type==='expense'){
-    if(from) changeAccountBalance(from, isLiability(from)?-amt:+amt);
-  }else if(t.type==='income'){
-    if(from) changeAccountBalance(from, isLiability(from)?+amt:-amt);
-  }else if(t.type==='transfer'){
-    if(from) changeAccountBalance(from, isLiability(from)?-amt:+amt);
-    if(to) changeAccountBalance(to, isLiability(to)?+amt:-amt);
-  }else if(t.type==='debt'){
-    if(from) changeAccountBalance(from,+amt);
-    if(to && isLiability(to)) changeAccountBalance(to,+amt);
-  }
-}
-function applyEffect(t){
-  const from=db.accounts.find(a=>a.id===t.from), to=db.accounts.find(a=>a.id===t.to);
-  const amt=t.amount;
-  if(t.type==='expense'){
-    if(from) changeAccountBalance(from, isLiability(from)?+amt:-amt);
-  }else if(t.type==='income'){
-    if(from) changeAccountBalance(from, isLiability(from)?-amt:+amt);
-  }else if(t.type==='transfer'){
-    if(from) changeAccountBalance(from, isLiability(from)?+amt:-amt);
-    if(to) changeAccountBalance(to, isLiability(to)?-amt:+amt);
-  }else if(t.type==='debt'){
-    if(from) changeAccountBalance(from,-amt);
-    if(to && isLiability(to)) changeAccountBalance(to,-amt);
-  }
-}
+window.goTab=goTab;
+
+document.querySelectorAll('.bottom-nav button').forEach(b=>b.addEventListener('click',()=>goTab(b.dataset.tab)));
+$('prevMonth').onclick=()=>{viewDate=new Date(viewDate.getFullYear(),viewDate.getMonth()-1,1);renderAll();window.scrollTo(0,0)}
+$('nextMonth').onclick=()=>{viewDate=new Date(viewDate.getFullYear(),viewDate.getMonth()+1,1);renderAll();window.scrollTo(0,0)}
+$('todayBtn').onclick=()=>{viewDate=new Date();renderAll();window.scrollTo(0,0)}
+
 function renderAll(){
-  document.getElementById('monthLabel').textContent=`${viewDate.getFullYear()}년 ${viewDate.getMonth()+1}월`;
-  renderHome();renderTx();renderAssets();renderSettings();populateSelects();
+  $('monthLabel').textContent=`${viewDate.getFullYear()}년 ${viewDate.getMonth()+1}월`;
+  renderHome();renderDistribution();renderAssets();renderUses();renderHistory();renderSettings();populateUseSelects();
 }
 function renderHome(){
-  const {income,expense}=totals(), a=assetTotals(), remain=db.budget-expense;
-  kBudget.textContent=won(db.budget);kIncome.textContent=won(income);kExpense.textContent=won(expense);kNet.textContent=won(a.net);
-  kBudgetSub.textContent=`사용 ${won(expense)} · 남음 ${won(remain)}`;
-  kNetSub.textContent=`자산 ${won(a.assets)} · 부채 ${won(a.liabs)}`;
-  budgetProgress.style.width=Math.min(100,db.budget?expense/db.budget*100:0)+'%';
-  const list=[...monthTx()].sort((a,b)=>b.date.localeCompare(a.date)||b.created-b.created).slice(0,5);
-  recentList.innerHTML=list.length?list.map(txRow).join(''):'<div class="empty">이번 달 거래가 없어요.</div>';
+  const net=currentNet(), d=distFor(), uses=monthUses();
+  const income=Number(d.income.taehwan||0)+Number(d.income.areum||0)+Number(d.income.other||0);
+  const exp=sum(d.expenses,x=>x.amount), saving=sum(d.savings,x=>x.amount), use=sum(uses,x=>x.amount);
+  $('homeNet').textContent=won(net);$('homeIncome').textContent=won(income);$('homeExpense').textContent=won(exp);$('homeSaving').textContent=won(saving);$('homeAssetUse').textContent=won(use);
+  const prev=db.snapshots[prevMonthKey()];
+  $('homeDelta').textContent=prev?`전월말 대비 ${(net-prev.net)>=0?'+':''}${won(net-prev.net)}`:'전월말 기록 없음';
+  $('homeDelta').className='sub delta '+(prev&&net-prev.net<0?'down':'up');
+  const arr=[...db.assets].sort((a,b)=>b.balance-a.balance);
+  $('homeAssets').innerHTML=arr.length?arr.slice(0,6).map(a=>assetRow(a,false)).join(''):'<div class="empty">등록된 재산이 없어요.</div>';
+  const changes=[];
+  uses.slice().sort((a,b)=>b.date.localeCompare(a.date)).slice(0,4).forEach(u=>changes.push({date:u.date,title:u.memo||u.category,amt:-u.amount,meta:(db.assets.find(a=>a.id===u.assetId)?.name||'자산')+' 사용'}));
+  if(d.savedAt) d.savings.slice(0,4).forEach(s=>changes.push({date:monthKey(),title:db.assets.find(a=>a.id===s.assetId)?.name||'저축·적립',amt:s.amount,meta:'월급분배'}));
+  $('homeChanges').innerHTML=changes.length?changes.slice(0,6).map(c=>`<div class="row"><div class="row-main"><div class="row-title">${escapeHtml(c.title)}</div><div class="row-meta">${c.date} · ${escapeHtml(c.meta)}</div></div><div class="amt ${c.amt>=0?'plus':'minus'}">${c.amt>=0?'+':''}${won(c.amt)}</div></div>`).join(''):'<div class="empty">최근 자산 변동이 없어요.</div>';
 }
-function txRow(t){
-  const sign=t.type==='income'?'+':t.type==='expense'?'-':'';
-  const cls=t.type==='income'?'in':t.type==='expense'?'out':'';
-  const from=db.accounts.find(a=>a.id===t.from)?.name||'';
-  return `<div class="row" onclick="editTx('${t.id}')">
-    <div class="row-main"><div class="row-title">${escapeHtml(t.memo||t.category||typeLabel(t.type))}</div>
-    <div class="row-meta">${t.date} · ${typeLabel(t.type)}${t.category?' · '+escapeHtml(t.category):''}${from?' · '+escapeHtml(from):''}</div></div>
-    <div class="amt ${cls}">${sign}${won(t.amount)}</div></div>`;
+function assetRow(a,click=true){
+  return `<div class="row"${click?` onclick="editAsset('${a.id}')"`:''}><div class="row-main"><div class="row-title">${escapeHtml(a.name)}${a.initialAsset?'<span class="asset-chip">초기자산</span>':''}</div><div class="row-meta">${assetTypeLabel(a.type)}${a.purpose?' · '+escapeHtml(a.purpose):''}</div></div><div class="amt">${won(a.balance)}</div></div>`;
 }
-function renderTx(){
-  const q=(searchInput?.value||'').trim().toLowerCase();
-  const cat=categoryFilter?.value||'';
-  let list=[...monthTx()].filter(t=>txFilter==='all'||t.type===txFilter);
-  if(q) list=list.filter(t=>(t.memo+' '+t.note+' '+t.category+' '+t.payer).toLowerCase().includes(q));
-  if(cat) list=list.filter(t=>t.category===cat);
-  list.sort((a,b)=>b.date.localeCompare(a.date)||b.created-a.created);
-  txList.innerHTML=list.length?list.map(txRow).join(''):'<div class="empty">조건에 맞는 거래가 없어요.</div>';
+
+function renderDistribution(){
+  const d=distFor();
+  $('incomeTaehwan').value=d.income.taehwan||'';
+  $('incomeAreum').value=d.income.areum||'';
+  $('incomeOther').value=d.income.other||'';
+  renderDistRows('expenseRows',d.expenses,'expense');
+  renderDistRows('savingRows',d.savings,'saving');
+  calcDistribution();
+  $('deleteDistribution').style.display=d.savedAt?'block':'none';
 }
+function renderDistRows(containerId,rows,type){
+  const el=$(containerId); el.innerHTML='';
+  if(!rows.length){
+    if(type==='expense') rows.push({name:'',amount:0});
+    else rows.push({assetId:'',amount:0});
+  }
+  rows.forEach((r,i)=>el.appendChild(makeDistRow(r,type,i)));
+}
+function makeDistRow(r,type,i){
+  const div=document.createElement('div');div.className='dist-row';
+  if(type==='expense'){
+    const opts=db.categories.map(c=>`<option value="${escapeHtml(c)}"${c===r.name?' selected':''}>${escapeHtml(c)}</option>`).join('');
+    div.innerHTML=`<select data-kind="expense" data-i="${i}"><option value="">항목 선택</option>${opts}</select><input data-kind="expenseAmt" data-i="${i}" type="number" min="0" inputmode="numeric" value="${r.amount||''}"><button class="icon-btn" data-remove="expense" data-i="${i}">×</button>`;
+  }else{
+    const opts=db.assets.map(a=>`<option value="${a.id}"${a.id===r.assetId?' selected':''}>${escapeHtml(a.name)}</option>`).join('');
+    div.innerHTML=`<select data-kind="saving" data-i="${i}"><option value="">재산 선택</option>${opts}</select><input data-kind="savingAmt" data-i="${i}" type="number" min="0" inputmode="numeric" value="${r.amount||''}"><button class="icon-btn" data-remove="saving" data-i="${i}">×</button>`;
+  }
+  div.querySelectorAll('select,input').forEach(x=>x.addEventListener('input',calcDistribution));
+  div.querySelector('button').onclick=()=>{div.remove();calcDistribution()};
+  return div;
+}
+$('addExpenseRow').onclick=()=>{$('expenseRows').appendChild(makeDistRow({name:'',amount:0},'expense',$('expenseRows').children.length))}
+$('addSavingRow').onclick=()=>{$('savingRows').appendChild(makeDistRow({assetId:'',amount:0},'saving',$('savingRows').children.length))}
+['incomeTaehwan','incomeAreum','incomeOther'].forEach(id=>$(id).addEventListener('input',calcDistribution));
+function collectDistribution(){
+  const expenses=[...$('expenseRows').children].map(row=>({name:row.querySelector('select').value,amount:Number(row.querySelector('input').value)||0})).filter(x=>x.name&&x.amount>0);
+  const savings=[...$('savingRows').children].map(row=>({assetId:row.querySelector('select').value,amount:Number(row.querySelector('input').value)||0})).filter(x=>x.assetId&&x.amount>0);
+  return {income:{taehwan:Number($('incomeTaehwan').value)||0,areum:Number($('incomeAreum').value)||0,other:Number($('incomeOther').value)||0},expenses,savings};
+}
+function calcDistribution(){
+  const d=collectDistribution(), income=d.income.taehwan+d.income.areum+d.income.other, exp=sum(d.expenses,x=>x.amount), sav=sum(d.savings,x=>x.amount);
+  $('distIncome').textContent=won(income);$('distExpense').textContent=won(exp);$('distSaving').textContent=won(sav);
+}
+$('copyPrev').onclick=()=>{
+  const p=db.distributions[prevMonthKey()];
+  if(!p){alert('전월 분배 기록이 없어요.');return}
+  db.distributions[monthKey()]={income:{...p.income},expenses:p.expenses.map(x=>({...x})),savings:p.savings.map(x=>({...x})),savedAt:null};
+  renderDistribution();$('distStatus').textContent='전월 분배를 불러왔어요. 금액을 수정한 뒤 저장해 주세요.';
+}
+$('saveDistribution').onclick=()=>{
+  const key=monthKey(), next=collectDistribution(), old=db.distributions[key];
+  // 저장된 기존 저축분이 있다면 먼저 되돌림
+  if(old&&old.savedAt) old.savings.forEach(s=>{const a=db.assets.find(a=>a.id===s.assetId);if(a)a.balance-=Number(s.amount)||0});
+  next.savings.forEach(s=>{const a=db.assets.find(a=>a.id===s.assetId);if(a)a.balance+=Number(s.amount)||0});
+  db.distributions[key]={...next,savedAt:Date.now()};
+  db.snapshots[key]={net:currentNet(),savedAt:Date.now()};
+  persist();$('distStatus').textContent='이번 달 월급분배를 저장했어요.';
+}
+$('deleteDistribution').onclick=()=>{
+  const key=monthKey(), old=db.distributions[key]; if(!old)return;
+  if(!confirm('이번 달 월급분배 기록을 삭제할까요? 저장으로 반영된 저축·적립 금액도 재산에서 되돌립니다.'))return;
+  if(old.savedAt) old.savings.forEach(s=>{const a=db.assets.find(a=>a.id===s.assetId);if(a)a.balance-=Number(s.amount)||0});
+  delete db.distributions[key]; delete db.snapshots[key]; persist();
+}
+
 function renderAssets(){
-  const a=assetTotals();aAssets.textContent=won(a.assets);aLiabs.textContent=won(a.liabs);aNet.textContent=won(a.net);
-  const order=['bank','cash','saving','investment','deposit','card','loan'];
-  assetGroups.innerHTML=order.map(type=>{
-    const arr=db.accounts.filter(a=>a.type===type); if(!arr.length)return '';
-    return `<div class="asset-group"><div class="asset-head"><strong>${accTypeLabel(type)}</strong><span>${won(arr.reduce((s,a)=>s+a.balance,0))}</span></div>
-    ${arr.map(a=>`<div class="asset-card row" onclick="editAccount('${a.id}')"><div><div class="row-title">${escapeHtml(a.name)}${a.initialAsset?' <span style="font-size:10px;color:var(--accent);font-weight:700">초기자산</span>':''}</div><div class="row-meta">${a.initialAsset&&a.initialDate?escapeHtml(a.initialDate)+' · ':''}${escapeHtml(a.memo||accTypeLabel(a.type))}</div></div><div class="amt">${won(a.balance)}</div></div>`).join('')}</div>`
-  }).join('');
+  $('assetTotal').textContent=won(currentNet());
+  const groups=['bank','saving','purpose','investment','cash','other'];
+  $('assetList').innerHTML=groups.map(t=>{
+    const arr=db.assets.filter(a=>a.type===t);if(!arr.length)return '';
+    return `<div class="section-title"><h2>${assetTypeLabel(t)}</h2><span class="tag">${won(sum(arr,a=>a.balance))}</span></div><div class="card">${arr.map(a=>assetRow(a,true)).join('')}</div>`;
+  }).join('')||'<div class="card empty">등록된 재산이 없어요.</div>';
 }
+$('openAsset').onclick=()=>{resetAssetDialog();$('assetDialogTitle').textContent='재산 추가';$('assetDialog').showModal()}
+window.editAsset=id=>{
+  const a=db.assets.find(x=>x.id===id);if(!a)return;
+  $('assetId').value=a.id;$('assetName').value=a.name;$('assetType').value=a.type;$('assetBalance').value=a.balance;$('assetPurpose').value=a.purpose||'';$('assetMemo').value=a.memo||'';$('assetDialogTitle').textContent='재산 수정';$('assetDialog').showModal()
+}
+function resetAssetDialog(){$('assetId').value='';$('assetName').value='';$('assetType').value='bank';$('assetBalance').value='';$('assetPurpose').value='';$('assetMemo').value=''}
+$('saveAsset').onclick=()=>{
+  const name=$('assetName').value.trim();if(!name){alert('재산명을 입력해 주세요.');return}
+  const id=$('assetId').value, ex=db.assets.find(a=>a.id===id);
+  const obj={id:id||uid(),name,type:$('assetType').value,balance:Number($('assetBalance').value)||0,purpose:$('assetPurpose').value.trim(),memo:$('assetMemo').value.trim()};
+  if(ex){const keep={initialAsset:ex.initialAsset,initialDate:ex.initialDate,initialAmount:ex.initialAmount};Object.assign(ex,obj,keep)}else db.assets.push(obj);
+  $('assetDialog').close();persist();
+}
+$('openInitialAsset').onclick=()=>{$('initialDate').value=new Date().toISOString().slice(0,10);$('initialName').value='';$('initialType').value='bank';$('initialAmount').value='';$('initialPurpose').value='';$('initialMemo').value='';$('initialDialog').showModal()}
+$('saveInitial').onclick=()=>{
+  if(!$('initialDate').value||!$('initialName').value.trim()){alert('기준일과 재산명을 입력해 주세요.');return}
+  db.assets.push({id:uid(),name:$('initialName').value.trim(),type:$('initialType').value,balance:Number($('initialAmount').value)||0,purpose:$('initialPurpose').value.trim(),memo:$('initialMemo').value.trim(),initialAsset:true,initialDate:$('initialDate').value,initialAmount:Number($('initialAmount').value)||0});
+  $('initialDialog').close();persist();
+}
+
+function populateUseSelects(){
+  $('useAsset').innerHTML=db.assets.map(a=>`<option value="${a.id}">${escapeHtml(a.name)} · ${won(a.balance)}</option>`).join('');
+  $('useCategory').innerHTML=db.categories.map(c=>`<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
+}
+$('openUse').onclick=()=>{$('useId').value='';$('useDate').value=new Date().toISOString().slice(0,10);$('useAmount').value='';$('useMemo').value='';populateUseSelects();$('useDialogTitle').textContent='자산사용 기록';$('useDialog').showModal()}
+window.editUse=id=>{
+  const u=db.assetUses.find(x=>x.id===id);if(!u)return;
+  $('useId').value=u.id;$('useDate').value=u.date;populateUseSelects();$('useAsset').value=u.assetId;$('useAmount').value=u.amount;$('useCategory').value=u.category;$('useMemo').value=u.memo||'';$('useDialogTitle').textContent='자산사용 수정';$('useDialog').showModal()
+}
+$('saveUse').onclick=()=>{
+  const amount=Number($('useAmount').value);if(!$('useDate').value||!amount||!$('useAsset').value){alert('날짜, 재산, 금액을 입력해 주세요.');return}
+  const id=$('useId').value, ex=db.assetUses.find(x=>x.id===id);
+  if(ex){const oldA=db.assets.find(a=>a.id===ex.assetId);if(oldA)oldA.balance+=Number(ex.amount)||0}
+  const a=db.assets.find(a=>a.id===$('useAsset').value);if(!a){alert('재산을 찾을 수 없어요.');return}
+  a.balance-=amount;
+  const obj={id:id||uid(),date:$('useDate').value,assetId:a.id,amount,category:$('useCategory').value,memo:$('useMemo').value.trim(),created:ex?.created||Date.now()};
+  if(ex)Object.assign(ex,obj);else db.assetUses.push(obj);
+  $('useDialog').close();persist();
+}
+function renderUses(){
+  const arr=[...db.assetUses].sort((a,b)=>b.date.localeCompare(a.date)||b.created-a.created);
+  $('useList').innerHTML=arr.length?arr.map(u=>`<div class="row" onclick="editUse('${u.id}')"><div class="row-main"><div class="row-title">${escapeHtml(u.memo||u.category)}</div><div class="row-meta">${u.date} · ${escapeHtml(db.assets.find(a=>a.id===u.assetId)?.name||'삭제된 재산')} · ${escapeHtml(u.category)}</div></div><div class="amt minus">-${won(u.amount)}</div></div>`).join(''):'<div class="empty">자산사용 기록이 없어요.</div>';
+}
+
+function renderHistory(){
+  const keys=[...new Set([...Object.keys(db.distributions),...Object.keys(db.snapshots),...db.assetUses.map(u=>u.date.slice(0,7))])].sort().reverse();
+  $('historyList').innerHTML=keys.length?keys.map(k=>{
+    const d=db.distributions[k]||{income:{},expenses:[],savings:[]}, income=Number(d.income?.taehwan||0)+Number(d.income?.areum||0)+Number(d.income?.other||0), exp=sum(d.expenses||[],x=>x.amount), sav=sum(d.savings||[],x=>x.amount), use=sum(db.assetUses.filter(u=>u.date.startsWith(k)),x=>x.amount), snap=db.snapshots[k];
+    return `<div class="card" style="margin-bottom:9px"><div class="row"><div class="row-main"><div class="row-title">${k.replace('-','년 ')}월</div><div class="row-meta">수입 ${won(income)} · 생활비 ${won(exp)} · 저축 ${won(sav)} · 자산사용 ${won(use)}</div></div>${snap?`<div class="amt">${won(snap.net)}</div>`:''}</div></div>`;
+  }).join(''):'<div class="card empty">아직 월별 기록이 없어요.</div>';
+}
+
 function renderSettings(){
-  budgetInput.value=db.budget;
-  categoryList.innerHTML=db.categories.map(c=>`<div class="row"><div>${escapeHtml(c)}</div><button class="danger category-delete" onclick="deleteCategory('${encodeURIComponent(c)}')">삭제</button></div>`).join('');
+  $('categoryList').innerHTML=db.categories.map(c=>`<div class="row"><div>${escapeHtml(c)}</div><button class="danger" style="font-size:11px;padding:5px 8px" onclick="deleteCategory('${encodeURIComponent(c)}')">삭제</button></div>`).join('');
 }
-function populateSelects(){
-  const cats=db.categories.map(c=>`<option value="${escapeAttr(c)}">${escapeHtml(c)}</option>`).join('');
-  const oldCF=categoryFilter.value;categoryFilter.innerHTML='<option value="">모든 카테고리</option>'+cats;categoryFilter.value=oldCF;
-  const oldCat=txCategory.value;txCategory.innerHTML=cats; if(db.categories.includes(oldCat))txCategory.value=oldCat;
-  const opts=db.accounts.map(a=>`<option value="${a.id}">${escapeHtml(a.name)} · ${won(a.balance)}</option>`).join('');
-  txFrom.innerHTML='<option value="">선택 안 함</option>'+opts;txTo.innerHTML='<option value="">선택 안 함</option>'+opts;
-}
-function openTx(id=null){
-  txForm.reset();txId.value='';txModalTitle.textContent='거래 추가';
-  txDate.value=new Date().toISOString().slice(0,10);txType.value='expense';updateTxTypeUI();populateSelects();txDialog.showModal();
-}
-window.openTx=openTx;
-window.editTx=function(id){
-  const t=db.transactions.find(x=>x.id===id);if(!t)return;
-  txId.value=t.id;txType.value=t.type;txDate.value=t.date;txAmount.value=t.amount;txMemo.value=t.memo||'';txPayer.value=t.payer||'공동';txNote.value=t.note||'';
-  updateTxTypeUI();populateSelects();txCategory.value=t.category||db.categories[0];txFrom.value=t.from||'';txTo.value=t.to||'';txModalTitle.textContent='거래 수정';txDialog.showModal();
-}
-function updateTxTypeUI(){
-  const t=txType.value;toWrap.style.display=['transfer','debt'].includes(t)?'flex':'none';
-  fromLabel.textContent=t==='income'?'입금 계좌':t==='expense'?'결제 계좌/카드':t==='transfer'?'보내는 계좌/자산':'상환 출금 계좌';
-}
+$('addCategory').onclick=()=>{const c=$('newCategory').value.trim();if(c&&!db.categories.includes(c)){db.categories.push(c);$('newCategory').value='';persist()}}
+window.deleteCategory=enc=>{const c=decodeURIComponent(enc);if(confirm(`'${c}' 카테고리를 삭제할까요?`)){db.categories=db.categories.filter(x=>x!==c);persist()}}
 
-function openInitialAsset(){
-  initialDate.value=new Date().toISOString().slice(0,10);
-  initialName.value='';
-  initialType.value='bank';
-  initialAmount.value='';
-  initialMemo.value='';
-  initialAssetDialog.showModal();
+function downloadBlob(blob,name){const u=URL.createObjectURL(blob),a=document.createElement('a');a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),1000)}
+$('exportJson').onclick=()=>{downloadBlob(new Blob([JSON.stringify(db,null,2)],{type:'application/json'}),`아콩이네_v3_백업_${new Date().toISOString().slice(0,10)}.json`);$('dataStatus').textContent='JSON 백업 다운로드를 시작했어요.'}
+$('importJson').onchange=e=>{pendingJson=e.target.files[0]||null;$('jsonFileState').textContent=pendingJson?`선택됨: ${pendingJson.name}`:''}
+$('applyJson').onclick=async()=>{
+  if(!pendingJson){alert('먼저 JSON 파일을 선택해 주세요.');return}
+  try{const x=JSON.parse(await pendingJson.text());if(x.version!==3||!Array.isArray(x.assets)||!x.distributions)throw 0;if(!confirm('현재 데이터를 선택한 백업으로 교체할까요?'))return;db=normalize(x);localStorage.setItem(KEY,JSON.stringify(db));pendingJson=null;$('importJson').value='';$('jsonFileState').textContent='복원 완료';renderAll();alert('복원했습니다.')}catch(e){alert('v3 형식의 백업 파일인지 확인해 주세요.')}
 }
-window.openInitialAsset=openInitialAsset;
-
-function openAccount(){accountId.value='';accountName.value='';accountType.value='bank';accountBalance.value=0;accountMemo.value='';accountTitle.textContent='계좌/재산 추가';accountDialog.showModal()}
-window.openAccount=openAccount;
-window.editAccount=function(id){const a=db.accounts.find(x=>x.id===id);if(!a)return;accountId.value=a.id;accountName.value=a.name;accountType.value=a.type;accountBalance.value=a.balance;accountMemo.value=a.memo||'';accountTitle.textContent='계좌/재산 수정';accountDialog.showModal()}
-function escapeHtml(s=''){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
-function escapeAttr(s=''){return escapeHtml(s)}
-
-document.querySelectorAll('.bottom-nav button').forEach(b=>b.addEventListener('click',()=>{
-  document.querySelectorAll('.bottom-nav button').forEach(x=>x.classList.remove('active'));b.classList.add('active');
-  document.querySelectorAll('section.tab').forEach(x=>x.classList.remove('active'));document.getElementById(b.dataset.tab).classList.add('active');
-  window.scrollTo({top:0,behavior:'instant'});
-}));
-document.querySelectorAll('[data-txfilter]').forEach(b=>b.addEventListener('click',()=>{
-  document.querySelectorAll('[data-txfilter]').forEach(x=>x.classList.remove('active'));b.classList.add('active');txFilter=b.dataset.txfilter;renderTx();
-}));
-prevMonth.onclick=()=>{viewDate=new Date(viewDate.getFullYear(),viewDate.getMonth()-1,1);selectedCalendarDate=null;renderAll();window.scrollTo(0,0)}
-nextMonth.onclick=()=>{viewDate=new Date(viewDate.getFullYear(),viewDate.getMonth()+1,1);selectedCalendarDate=null;renderAll();window.scrollTo(0,0)}
-todayBtn.onclick=()=>{viewDate=new Date();selectedCalendarDate=null;renderAll();window.scrollTo(0,0)}
-txType.onchange=updateTxTypeUI;
-searchInput.addEventListener('input',()=>renderTx());
-categoryFilter.onchange=renderTx;
-
-saveTx.onclick=()=>{
-  const amt=Number(txAmount.value); if(!txDate.value||!amt){alert('날짜와 금액을 입력해 주세요.');return}
-  if(['transfer','debt'].includes(txType.value)&&(!txFrom.value||!txTo.value)){alert('보내는 곳과 받는 곳을 모두 선택해 주세요.');return}
-  if(txType.value==='transfer'&&txFrom.value===txTo.value){alert('서로 다른 계좌를 선택해 주세요.');return}
-  const existing=db.transactions.find(x=>x.id===txId.value); if(existing) reverseEffect(existing);
-  const t={id:existing?.id||crypto.randomUUID(),type:txType.value,date:txDate.value,amount:amt,category:txCategory.value||'',memo:txMemo.value.trim(),from:txFrom.value||'',to:txTo.value||'',payer:txPayer.value,note:txNote.value.trim(),created:existing?.created||Date.now()};
-  if(existing) Object.assign(existing,t); else db.transactions.push(t);
-  applyEffect(t);txDialog.close();save();
+$('exportCsv').onclick=()=>{
+  const head=['월','구분','항목','금액','재산','날짜','메모'],rows=[];
+  Object.entries(db.distributions).forEach(([k,d])=>{rows.push([k,'수입','태환',d.income.taehwan,'','','']);rows.push([k,'수입','아름',d.income.areum,'','','']);if(d.income.other)rows.push([k,'수입','기타',d.income.other,'','','']);(d.expenses||[]).forEach(x=>rows.push([k,'생활비',x.name,x.amount,'','','']));(d.savings||[]).forEach(x=>rows.push([k,'저축·적립',db.assets.find(a=>a.id===x.assetId)?.name||'',x.amount,'','','']))});
+  db.assetUses.forEach(u=>rows.push([u.date.slice(0,7),'자산사용',u.category,u.amount,db.assets.find(a=>a.id===u.assetId)?.name||'',u.date,u.memo||'']));
+  const csv='\ufeff'+[head,...rows].map(r=>r.map(v=>`"${String(v??'').replaceAll('"','""')}"`).join(',')).join('\r\n');
+  downloadBlob(new Blob([csv],{type:'text/csv;charset=utf-8'}),`아콩이네_월별기록_${new Date().toISOString().slice(0,10)}.csv`);$('dataStatus').textContent='CSV 다운로드를 시작했어요.';
 }
+$('resetAll').onclick=()=>{if(!confirm('모든 데이터를 초기화할까요?'))return;if(!confirm('정말 초기화할까요? 이 작업은 되돌릴 수 없습니다.'))return;localStorage.removeItem(KEY);db=structuredClone(defaults);renderAll();alert('초기화했습니다.')}
 
-saveInitialAsset.onclick=()=>{
-  const name=initialName.value.trim();
-  const amount=Number(initialAmount.value);
-  if(!initialDate.value){alert('기준일을 입력해 주세요.');return}
-  if(!name){alert('자산명을 입력해 주세요.');return}
-  if(!Number.isFinite(amount)){alert('초기금액을 입력해 주세요.');return}
-  db.accounts.push({
-    id:crypto.randomUUID(),
-    name,
-    type:initialType.value,
-    balance:amount,
-    memo:initialMemo.value.trim(),
-    initialAsset:true,
-    initialDate:initialDate.value,
-    initialAmount:amount
-  });
-  initialAssetDialog.close();
-  save();
-}
+['assetDialog','initialDialog','useDialog'].forEach(id=>$(id).addEventListener('click',e=>{if(e.target===$(id))$(id).close()}));
 
-saveAccount.onclick=()=>{
-  const name=accountName.value.trim();if(!name){alert('이름을 입력해 주세요.');return}
-  const id=accountId.value, ex=db.accounts.find(a=>a.id===id);
-  const obj={
-    id:id||crypto.randomUUID(),
-    name,
-    type:accountType.value,
-    balance:Number(accountBalance.value)||0,
-    memo:accountMemo.value.trim()
-  };
-  if(ex){
-    if(ex.initialAsset){
-      obj.initialAsset=true;
-      obj.initialDate=ex.initialDate;
-      obj.initialAmount=ex.initialAmount;
-    }
-    Object.assign(ex,obj);
-  } else db.accounts.push(obj);
-  accountDialog.close();save();
-}
-saveBudget.onclick=()=>{db.budget=Math.max(0,Number(budgetInput.value)||0);save()}
-addCategory.onclick=()=>{const c=newCategory.value.trim();if(c&&!db.categories.includes(c)){db.categories.push(c);newCategory.value='';save()}}
-window.deleteCategory=function(enc){const c=decodeURIComponent(enc);if(confirm(`'${c}' 카테고리를 삭제할까요? 기존 거래에는 그대로 남습니다.`)){db.categories=db.categories.filter(x=>x!==c);save()}}
-
-txDialog.addEventListener('click',e=>{if(e.target===txDialog)txDialog.close()});
-accountDialog.addEventListener('click',e=>{if(e.target===accountDialog)accountDialog.close()});
-initialAssetDialog.addEventListener('click',e=>{if(e.target===initialAssetDialog)initialAssetDialog.close()});
-
-let pendingCsvFile=null;
-let pendingJsonFile=null;
-
-exportJson.onclick=()=>{
-  const blob=new Blob([JSON.stringify(db,null,2)],{type:'application/json'});
-  downloadBlob(blob,`아콩이네_공동가계부_백업_${new Date().toISOString().slice(0,10)}.json`);
-}
-exportCsv.onclick=()=>{
-  const head=['날짜','유형','금액','카테고리','내용','결제한사람','연결계좌','받는계좌','메모'];
-  const rows=db.transactions.map(t=>[t.date,typeLabel(t.type),t.amount,t.category,t.memo,t.payer,db.accounts.find(a=>a.id===t.from)?.name||'',db.accounts.find(a=>a.id===t.to)?.name||'',t.note]);
-  const csv='\ufeff'+[head,...rows].map(r=>r.map(csvCell).join(',')).join('\n');
-  downloadBlob(new Blob([csv],{type:'text/csv;charset=utf-8'}),`아콩이네_공동가계부_거래_${new Date().toISOString().slice(0,10)}.csv`);
-}
-downloadCsvTemplate.onclick=()=>{
-  const head=['날짜','유형','금액','카테고리','내용','결제한사람','연결계좌','받는계좌','메모'];
-  const sample=['2026-08-21','지출','35000','장보기','마트 장보기','공동','공동생활비 통장','','예시 행은 삭제 후 사용'];
-  const csv='\ufeff'+[head,sample].map(r=>r.map(csvCell).join(',')).join('\n');
-  downloadBlob(new Blob([csv],{type:'text/csv;charset=utf-8'}),'아콩이네_공동가계부_CSV입력양식.csv');
-}
-function csvCell(v){return `"${String(v??'').replaceAll('"','""')}"`}
-function downloadBlob(blob,name){const u=URL.createObjectURL(blob),a=document.createElement('a');a.href=u;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(u),1000)}
-
-importCsv.onchange=(e)=>{
-  pendingCsvFile=e.target.files[0]||null;
-  csvFileState.textContent=pendingCsvFile?`선택됨: ${pendingCsvFile.name}`:'';
-}
-applyCsv.onclick=async()=>{
-  if(!pendingCsvFile){alert('먼저 CSV 파일을 선택해 주세요.');return}
-  try{
-    const text=(await pendingCsvFile.text()).replace(/^\uFEFF/,'');
-    const rows=parseCsv(text);
-    if(rows.length<2) throw new Error('내용 없음');
-    const head=rows[0].map(x=>x.trim());
-    const required=['날짜','유형','금액','카테고리','내용','결제한사람','연결계좌','받는계좌','메모'];
-    if(!required.every(x=>head.includes(x))) throw new Error('양식 불일치');
-
-    const idx=Object.fromEntries(head.map((h,i)=>[h,i]));
-    let added=0;
-    for(const r of rows.slice(1)){
-      if(!r.some(v=>String(v||'').trim())) continue;
-      const date=(r[idx['날짜']]||'').trim();
-      const amount=Number(String(r[idx['금액']]||'').replaceAll(',','').trim());
-      if(!/^\d{4}-\d{2}-\d{2}$/.test(date)||!amount) continue;
-
-      const label=(r[idx['유형']]||'').trim();
-      const typeMap={'수입':'income','지출':'expense','자산이동':'transfer','부채상환':'debt','income':'income','expense':'expense','transfer':'transfer','debt':'debt'};
-      const type=typeMap[label]||'expense';
-      const fromName=(r[idx['연결계좌']]||'').trim();
-      const toName=(r[idx['받는계좌']]||'').trim();
-      const from=db.accounts.find(a=>a.name===fromName)?.id||'';
-      const to=db.accounts.find(a=>a.name===toName)?.id||'';
-
-      const t={
-        id:crypto.randomUUID(), type, date, amount,
-        category:(r[idx['카테고리']]||'').trim(),
-        memo:(r[idx['내용']]||'').trim(),
-        payer:(r[idx['결제한사람']]||'공동').trim()||'공동',
-        from,to,
-        note:(r[idx['메모']]||'').trim(),
-        created:Date.now()+added
-      };
-      db.transactions.push(t);
-      applyEffect(t);
-      added++;
-    }
-    if(!added) throw new Error('추가할 거래 없음');
-    save();
-    alert(`${added}건을 가져왔습니다.`);
-    pendingCsvFile=null; importCsv.value=''; csvFileState.textContent='';
-  }catch(err){
-    alert('CSV 파일이나 입력 양식을 확인해 주세요.');
-  }
-}
-function parseCsv(text){
-  const out=[]; let row=[], cell='', quoted=false;
-  for(let i=0;i<text.length;i++){
-    const ch=text[i], next=text[i+1];
-    if(ch==='"'){
-      if(quoted && next==='"'){cell+='"';i++}
-      else quoted=!quoted;
-    }else if(ch===',' && !quoted){row.push(cell);cell=''}
-    else if((ch==='\n'||ch==='\r')&&!quoted){
-      if(ch==='\r'&&next==='\n')i++;
-      row.push(cell);out.push(row);row=[];cell='';
-    }else cell+=ch;
-  }
-  if(cell.length||row.length){row.push(cell);out.push(row)}
-  return out;
-}
-
-importJson.onchange=(e)=>{
-  pendingJsonFile=e.target.files[0]||null;
-  jsonFileState.textContent=pendingJsonFile?`선택됨: ${pendingJsonFile.name}`:'';
-}
-applyJson.onclick=async()=>{
-  if(!pendingJsonFile){alert('먼저 JSON 백업 파일을 선택해 주세요.');return}
-  try{
-    const x=JSON.parse(await pendingJsonFile.text());
-    if(!Array.isArray(x.accounts)||!Array.isArray(x.transactions)) throw 0;
-    if(!confirm('현재 데이터를 선택한 백업 내용으로 교체할까요?')) return;
-    db=x;save();alert('복원했습니다.');
-    pendingJsonFile=null; importJson.value=''; jsonFileState.textContent='';
-  }catch{
-    alert('백업 파일을 확인해 주세요.');
-  }
-}
-
-resetData.onclick=()=>{
-  if(!confirm('모든 데이터를 초기화할까요?\n\n수익·지출, 재산, 초기자산, 카테고리, 예산 설정이 모두 삭제되고 기본 상태로 돌아갑니다.')) return;
-  db=structuredClone(defaults);
-  pendingCsvFile=null;
-  pendingJsonFile=null;
-  importCsv.value='';
-  importJson.value='';
-  csvFileState.textContent='';
-  jsonFileState.textContent='';
-  save();
-  alert('데이터를 초기화했습니다.');
-}
-
-if('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(()=>{});
+if('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('./sw.js').catch(()=>{});
 renderAll();
 </script>
 </body>
