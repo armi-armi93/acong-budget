@@ -1,0 +1,9 @@
+{
+  "name": "아콩이네 공동가계부🫛",
+  "short_name": "아콩이네",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#f7f7f2",
+  "theme_color": "#f7f7f2",
+  "icons": []
+}

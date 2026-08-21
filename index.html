@@ -1,0 +1,509 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no" />
+  <meta name="theme-color" content="#f7f7f2" />
+  <title>아콩이네 공동가계부🫛 v1</title>
+  <link rel="manifest" href="manifest.webmanifest" />
+  <style>
+    :root{
+      --bg:#f7f7f2; --card:#fff; --text:#222; --muted:#777; --line:#e7e7df;
+      --accent:#3d6b52; --danger:#b94a48; --shadow:0 4px 18px rgba(0,0,0,.06);
+      --nav-h:72px;
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR",Segoe UI,sans-serif}
+    body{font-size:14px;overscroll-behavior-y:none}
+    button,input,select,textarea{font:inherit;font-size:16px}
+    button{cursor:pointer}
+    header{
+      position:sticky; top:0; z-index:20; background:rgba(247,247,242,.96);
+      backdrop-filter:blur(10px); padding:14px 16px 10px; border-bottom:1px solid var(--line)
+    }
+    .title-row{display:flex;align-items:center;justify-content:space-between;gap:12px}
+    h1{font-size:20px;margin:0;font-weight:800;white-space:nowrap}
+    .version{font-size:12px;color:var(--muted)}
+    .month-nav{display:flex;align-items:center;gap:8px;margin-top:10px}
+    .month-nav button{border:1px solid var(--line);background:#fff;border-radius:10px;padding:6px 10px}
+    .month-label{font-weight:700;min-width:112px;text-align:center}
+    main{padding:14px 14px calc(var(--nav-h) + 22px);max-width:820px;margin:auto}
+    section.tab{display:none}
+    section.tab.active{display:block}
+    .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+    .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;box-shadow:var(--shadow)}
+    .kpi .label{font-size:12px;color:var(--muted);margin-bottom:6px}
+    .kpi .value{font-size:21px;font-weight:800;letter-spacing:-.4px}
+    .kpi .sub{font-size:12px;color:var(--muted);margin-top:4px}
+    .wide{grid-column:1/-1}
+    .section-title{display:flex;align-items:center;justify-content:space-between;margin:18px 2px 8px}
+    .section-title h2{font-size:15px;margin:0}
+    .section-title button,.ghost{border:1px solid var(--line);background:#fff;border-radius:10px;padding:7px 10px}
+    .primary{background:var(--accent);color:#fff;border:0;border-radius:12px;padding:10px 13px;font-weight:700}
+    .danger{background:#fff;color:var(--danger);border:1px solid #e9c8c7;border-radius:10px;padding:7px 10px}
+    .progress{height:10px;border-radius:999px;background:#ecece5;overflow:hidden;margin-top:8px}
+    .progress > span{display:block;height:100%;background:var(--accent);width:0}
+    .list{display:flex;flex-direction:column;gap:8px}
+    .row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 0;border-bottom:1px solid var(--line)}
+    .row:last-child{border-bottom:0}
+    .row-main{min-width:0}
+    .row-title{font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .row-meta{font-size:12px;color:var(--muted);margin-top:3px}
+    .amt{font-weight:800;white-space:nowrap}
+    .amt.in{color:#257047}.amt.out{color:#9a3e3b}
+    .seg{display:flex;background:#eaeae3;border-radius:12px;padding:3px;gap:3px;margin-bottom:12px}
+    .seg button{flex:1;border:0;background:transparent;border-radius:9px;padding:8px;font-size:13px}
+    .seg button.active{background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.08);font-weight:700}
+    .toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+    .toolbar input,.toolbar select{min-width:0;border:1px solid var(--line);background:#fff;border-radius:10px;padding:9px}
+    .toolbar input{flex:1}
+    .asset-group{margin-bottom:14px}
+    .asset-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+    .asset-head strong{font-size:14px}
+    .asset-card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:10px 12px;margin-bottom:7px}
+    .bottom-nav{
+      position:fixed;left:0;right:0;bottom:0;z-index:50;height:var(--nav-h);
+      background:rgba(255,255,255,.96);backdrop-filter:blur(12px);border-top:1px solid var(--line);
+      display:flex;justify-content:space-around;padding-bottom:env(safe-area-inset-bottom)
+    }
+    .bottom-nav button{flex:1;border:0;background:transparent;font-size:11px;color:#666;padding:7px 2px 5px;display:flex;flex-direction:column;gap:4px;align-items:center;justify-content:center}
+    .bottom-nav button .ico{font-size:19px}
+    .bottom-nav button.active{color:var(--accent);font-weight:800}
+    dialog{border:0;border-radius:18px;padding:0;width:min(92vw,520px);max-height:88vh;overflow:auto;box-shadow:0 20px 70px rgba(0,0,0,.25)}
+    dialog::backdrop{background:rgba(0,0,0,.4)}
+    .modal{padding:16px}
+    .modal h3{margin:0 0 12px;font-size:18px}
+    .form{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .field{display:flex;flex-direction:column;gap:5px}
+    .field.full{grid-column:1/-1}
+    label{font-size:12px;color:var(--muted)}
+    input,select,textarea{border:1px solid var(--line);border-radius:10px;padding:10px;background:#fff;width:100%}
+    textarea{min-height:70px;resize:vertical}
+    .modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:14px}
+    .calendar-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+    .dow{text-align:center;color:var(--muted);font-size:11px;padding:5px 0}
+    .day{min-height:72px;background:#fff;border:1px solid var(--line);border-radius:10px;padding:6px;overflow:hidden}
+    .day.muted{opacity:.4}
+    .day-num{font-size:11px;font-weight:700}
+    .day-amt{font-size:10px;margin-top:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .analysis-bars .bar-row{display:grid;grid-template-columns:90px 1fr 72px;gap:8px;align-items:center;margin:8px 0}
+    .bar-bg{height:9px;background:#ecece5;border-radius:99px;overflow:hidden}
+    .bar-fill{height:100%;background:var(--accent)}
+    .empty{color:var(--muted);font-size:13px;text-align:center;padding:20px 5px}
+    .hint{font-size:12px;color:var(--muted);line-height:1.55}
+    @media (max-width:560px){
+      .grid{grid-template-columns:1fr 1fr}
+      .form{grid-template-columns:1fr}
+      .field.full{grid-column:auto}
+      .calendar-grid{gap:3px}
+      .day{min-height:64px;padding:4px}
+    }
+  </style>
+</head>
+<body>
+<header>
+  <div class="title-row">
+    <h1>아콩이네 공동가계부🫛</h1>
+    <span class="version">version 1</span>
+  </div>
+  <div class="month-nav">
+    <button id="prevMonth">‹</button>
+    <div class="month-label" id="monthLabel"></div>
+    <button id="nextMonth">›</button>
+    <button id="todayBtn" style="margin-left:auto">이번 달</button>
+  </div>
+</header>
+
+<main>
+  <section id="home" class="tab active">
+    <div class="grid">
+      <div class="card kpi">
+        <div class="label">월 생활비 예산</div><div class="value" id="kBudget">0원</div>
+        <div class="progress"><span id="budgetProgress"></span></div>
+        <div class="sub" id="kBudgetSub">사용 0원 · 남음 0원</div>
+      </div>
+      <div class="card kpi">
+        <div class="label">이번 달 수입</div><div class="value" id="kIncome">0원</div>
+        <div class="sub">공동 자금으로 들어온 금액</div>
+      </div>
+      <div class="card kpi">
+        <div class="label">이번 달 지출</div><div class="value" id="kExpense">0원</div>
+        <div class="sub">자산이동·부채상환 제외</div>
+      </div>
+      <div class="card kpi">
+        <div class="label">공동 순자산</div><div class="value" id="kNet">0원</div>
+        <div class="sub" id="kNetSub">자산 0원 · 부채 0원</div>
+      </div>
+    </div>
+    <div class="section-title"><h2>최근 거래</h2><button onclick="openTx()">+ 거래 추가</button></div>
+    <div class="card"><div id="recentList" class="list"></div></div>
+  </section>
+
+  <section id="transactions" class="tab">
+    <div class="seg">
+      <button class="active" data-txfilter="all">전체</button>
+      <button data-txfilter="income">수입</button>
+      <button data-txfilter="expense">지출</button>
+      <button data-txfilter="transfer">자산이동</button>
+      <button data-txfilter="debt">부채상환</button>
+    </div>
+    <div class="toolbar">
+      <input id="searchInput" placeholder="내용 검색" autocomplete="off" />
+      <select id="categoryFilter"><option value="">모든 카테고리</option></select>
+      <button class="primary" onclick="openTx()">+ 추가</button>
+    </div>
+    <div class="card"><div id="txList" class="list"></div></div>
+  </section>
+
+  <section id="assets" class="tab">
+    <div class="grid">
+      <div class="card kpi"><div class="label">총자산</div><div class="value" id="aAssets">0원</div></div>
+      <div class="card kpi"><div class="label">총부채</div><div class="value" id="aLiabs">0원</div></div>
+      <div class="card kpi wide"><div class="label">공동 순자산</div><div class="value" id="aNet">0원</div></div>
+    </div>
+    <div class="section-title"><h2>재산 목록</h2><button onclick="openAccount()">+ 계좌/재산 추가</button></div>
+    <div id="assetGroups"></div>
+    <div class="card hint">거래를 등록할 때 연결 계좌·카드를 선택하면 잔액이 자동으로 반영돼요. 계좌 간 이동은 지출이 아니라 ‘자산이동’으로 기록됩니다.</div>
+  </section>
+
+  <section id="calendar" class="tab">
+    <div class="card">
+      <div class="calendar-grid" id="calendarGrid"></div>
+    </div>
+    <div class="section-title"><h2>선택한 날짜</h2></div>
+    <div class="card"><div id="calendarDayList" class="list"><div class="empty">날짜를 선택해 주세요.</div></div></div>
+  </section>
+
+  <section id="analysis" class="tab">
+    <div class="grid">
+      <div class="card kpi"><div class="label">예산 사용률</div><div class="value" id="anRate">0%</div></div>
+      <div class="card kpi"><div class="label">지난달 대비 지출</div><div class="value" id="anChange">0%</div></div>
+    </div>
+    <div class="section-title"><h2>카테고리별 지출</h2></div>
+    <div class="card analysis-bars" id="categoryBars"></div>
+    <div class="section-title"><h2>최근 6개월 수입·지출</h2></div>
+    <div class="card" id="sixMonth"></div>
+  </section>
+
+  <section id="settings" class="tab">
+    <div class="section-title"><h2>월 예산</h2></div>
+    <div class="card">
+      <div class="field"><label>공동 생활비 월 예산</label><input id="budgetInput" inputmode="numeric" /></div>
+      <div style="margin-top:10px"><button class="primary" id="saveBudget">저장</button></div>
+    </div>
+    <div class="section-title"><h2>카테고리 관리</h2></div>
+    <div class="card">
+      <div class="toolbar"><input id="newCategory" placeholder="새 카테고리" /><button class="primary" id="addCategory">추가</button></div>
+      <div id="categoryList" class="list"></div>
+    </div>
+    <div class="section-title"><h2>데이터</h2></div>
+    <div class="card">
+      <div class="toolbar">
+        <button class="ghost" id="exportJson">백업(JSON)</button>
+        <button class="ghost" id="exportCsv">거래 CSV</button>
+        <label class="ghost" style="display:inline-flex;align-items:center">복원<input id="importJson" type="file" accept=".json" hidden></label>
+      </div>
+      <div class="hint">데이터는 이 기기의 브라우저에 저장됩니다. 중요한 데이터는 정기적으로 JSON 백업을 권장해요.</div>
+    </div>
+  </section>
+</main>
+
+<nav class="bottom-nav">
+  <button class="active" data-tab="home"><span class="ico">🏠</span>홈</button>
+  <button data-tab="transactions"><span class="ico">💸</span>수익·지출</button>
+  <button data-tab="assets"><span class="ico">🏦</span>재산</button>
+  <button data-tab="calendar"><span class="ico">📅</span>달력</button>
+  <button data-tab="analysis"><span class="ico">📊</span>분석</button>
+  <button data-tab="settings"><span class="ico">⚙️</span>설정</button>
+</nav>
+
+<dialog id="txDialog"><div class="modal">
+  <h3 id="txModalTitle">거래 추가</h3>
+  <form id="txForm" class="form">
+    <input type="hidden" id="txId" />
+    <div class="field"><label>거래유형</label>
+      <select id="txType">
+        <option value="expense">지출</option><option value="income">수입</option>
+        <option value="transfer">자산이동</option><option value="debt">부채상환</option>
+      </select>
+    </div>
+    <div class="field"><label>날짜</label><input id="txDate" type="date" required /></div>
+    <div class="field"><label>금액</label><input id="txAmount" type="number" min="0" step="1" inputmode="numeric" required /></div>
+    <div class="field"><label>카테고리</label><select id="txCategory"></select></div>
+    <div class="field full"><label>내용</label><input id="txMemo" placeholder="예: 장보기, 월급, 적금이체" /></div>
+    <div class="field"><label id="fromLabel">연결 계좌/카드</label><select id="txFrom"></select></div>
+    <div class="field" id="toWrap" style="display:none"><label>받는 계좌/부채</label><select id="txTo"></select></div>
+    <div class="field"><label>결제한 사람</label><select id="txPayer"><option>공동</option><option>아름</option><option>배우자</option></select></div>
+    <div class="field full"><label>메모</label><textarea id="txNote"></textarea></div>
+  </form>
+  <div class="modal-actions">
+    <button class="ghost" onclick="txDialog.close()">취소</button>
+    <button class="primary" id="saveTx">저장</button>
+  </div>
+</div></dialog>
+
+<dialog id="accountDialog"><div class="modal">
+  <h3 id="accountTitle">계좌/재산 추가</h3>
+  <div class="form">
+    <input type="hidden" id="accountId" />
+    <div class="field"><label>이름</label><input id="accountName" placeholder="예: 공동생활비 통장" /></div>
+    <div class="field"><label>종류</label>
+      <select id="accountType">
+        <option value="bank">통장</option><option value="cash">현금</option><option value="saving">예·적금</option>
+        <option value="investment">투자</option><option value="deposit">보증금/기타자산</option>
+        <option value="card">카드 미결제금</option><option value="loan">대출/기타부채</option>
+      </select>
+    </div>
+    <div class="field"><label>현재 잔액</label><input id="accountBalance" type="number" step="1" inputmode="numeric" /></div>
+    <div class="field"><label>메모</label><input id="accountMemo" /></div>
+  </div>
+  <div class="modal-actions">
+    <button class="ghost" onclick="accountDialog.close()">취소</button>
+    <button class="primary" id="saveAccount">저장</button>
+  </div>
+</div></dialog>
+
+<script>
+const KEY='akong_joint_v1';
+const defaults={
+  budget:1500000,
+  categories:['식비','장보기','외식','카페·간식','생활용품','교통','주거','통신','보험','의료','문화·여가','경조사','여행','급여','기타수입','저축','기타'],
+  accounts:[
+    {id:crypto.randomUUID(),name:'공동생활비 통장',type:'bank',balance:0,memo:''},
+    {id:crypto.randomUUID(),name:'공동카드',type:'card',balance:0,memo:'카드 미결제금'}
+  ],
+  transactions:[]
+};
+let db=load();
+let viewDate=new Date();
+let txFilter='all';
+let selectedCalendarDate=null;
+
+function load(){
+  try{
+    const raw=localStorage.getItem(KEY);
+    if(!raw) return structuredClone(defaults);
+    const x=JSON.parse(raw);
+    return {...structuredClone(defaults),...x};
+  }catch(e){return structuredClone(defaults)}
+}
+function save(){localStorage.setItem(KEY,JSON.stringify(db));renderAll()}
+function won(n){return Math.round(Number(n)||0).toLocaleString('ko-KR')+'원'}
+function ym(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')}
+function isLiability(a){return ['card','loan'].includes(a.type)}
+function typeLabel(t){return ({expense:'지출',income:'수입',transfer:'자산이동',debt:'부채상환'})[t]||t}
+function accTypeLabel(t){return ({bank:'통장',cash:'현금',saving:'예·적금',investment:'투자',deposit:'보증금/기타자산',card:'카드 미결제금',loan:'대출/기타부채'})[t]||t}
+function monthTx(offset=0){
+  const d=new Date(viewDate.getFullYear(),viewDate.getMonth()+offset,1);
+  const key=ym(d);
+  return db.transactions.filter(t=>t.date.startsWith(key));
+}
+function totals(tx=monthTx()){
+  const income=tx.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
+  const expense=tx.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
+  return {income,expense};
+}
+function assetTotals(){
+  let assets=0,liabs=0;
+  db.accounts.forEach(a=> isLiability(a)? liabs+=Math.max(0,a.balance):assets+=a.balance);
+  return {assets,liabs,net:assets-liabs}
+}
+function changeAccountBalance(a,delta){
+  if(!a) return;
+  a.balance = Math.round((Number(a.balance)||0)+delta);
+}
+function reverseEffect(t){
+  const from=db.accounts.find(a=>a.id===t.from), to=db.accounts.find(a=>a.id===t.to);
+  const amt=t.amount;
+  if(t.type==='expense'){
+    if(from) changeAccountBalance(from, isLiability(from)?-amt:+amt);
+  }else if(t.type==='income'){
+    if(from) changeAccountBalance(from, isLiability(from)?+amt:-amt);
+  }else if(t.type==='transfer'){
+    if(from) changeAccountBalance(from, isLiability(from)?-amt:+amt);
+    if(to) changeAccountBalance(to, isLiability(to)?+amt:-amt);
+  }else if(t.type==='debt'){
+    if(from) changeAccountBalance(from,+amt);
+    if(to && isLiability(to)) changeAccountBalance(to,+amt);
+  }
+}
+function applyEffect(t){
+  const from=db.accounts.find(a=>a.id===t.from), to=db.accounts.find(a=>a.id===t.to);
+  const amt=t.amount;
+  if(t.type==='expense'){
+    if(from) changeAccountBalance(from, isLiability(from)?+amt:-amt);
+  }else if(t.type==='income'){
+    if(from) changeAccountBalance(from, isLiability(from)?-amt:+amt);
+  }else if(t.type==='transfer'){
+    if(from) changeAccountBalance(from, isLiability(from)?+amt:-amt);
+    if(to) changeAccountBalance(to, isLiability(to)?-amt:+amt);
+  }else if(t.type==='debt'){
+    if(from) changeAccountBalance(from,-amt);
+    if(to && isLiability(to)) changeAccountBalance(to,-amt);
+  }
+}
+function renderAll(){
+  document.getElementById('monthLabel').textContent=`${viewDate.getFullYear()}년 ${viewDate.getMonth()+1}월`;
+  renderHome();renderTx();renderAssets();renderCalendar();renderAnalysis();renderSettings();populateSelects();
+}
+function renderHome(){
+  const {income,expense}=totals(), a=assetTotals(), remain=db.budget-expense;
+  kBudget.textContent=won(db.budget);kIncome.textContent=won(income);kExpense.textContent=won(expense);kNet.textContent=won(a.net);
+  kBudgetSub.textContent=`사용 ${won(expense)} · 남음 ${won(remain)}`;
+  kNetSub.textContent=`자산 ${won(a.assets)} · 부채 ${won(a.liabs)}`;
+  budgetProgress.style.width=Math.min(100,db.budget?expense/db.budget*100:0)+'%';
+  const list=[...monthTx()].sort((a,b)=>b.date.localeCompare(a.date)||b.created-b.created).slice(0,5);
+  recentList.innerHTML=list.length?list.map(txRow).join(''):'<div class="empty">이번 달 거래가 없어요.</div>';
+}
+function txRow(t){
+  const sign=t.type==='income'?'+':t.type==='expense'?'-':'';
+  const cls=t.type==='income'?'in':t.type==='expense'?'out':'';
+  const from=db.accounts.find(a=>a.id===t.from)?.name||'';
+  return `<div class="row" onclick="editTx('${t.id}')">
+    <div class="row-main"><div class="row-title">${escapeHtml(t.memo||t.category||typeLabel(t.type))}</div>
+    <div class="row-meta">${t.date} · ${typeLabel(t.type)}${t.category?' · '+escapeHtml(t.category):''}${from?' · '+escapeHtml(from):''}</div></div>
+    <div class="amt ${cls}">${sign}${won(t.amount)}</div></div>`;
+}
+function renderTx(){
+  const q=(searchInput?.value||'').trim().toLowerCase();
+  const cat=categoryFilter?.value||'';
+  let list=[...monthTx()].filter(t=>txFilter==='all'||t.type===txFilter);
+  if(q) list=list.filter(t=>(t.memo+' '+t.note+' '+t.category+' '+t.payer).toLowerCase().includes(q));
+  if(cat) list=list.filter(t=>t.category===cat);
+  list.sort((a,b)=>b.date.localeCompare(a.date)||b.created-a.created);
+  txList.innerHTML=list.length?list.map(txRow).join(''):'<div class="empty">조건에 맞는 거래가 없어요.</div>';
+}
+function renderAssets(){
+  const a=assetTotals();aAssets.textContent=won(a.assets);aLiabs.textContent=won(a.liabs);aNet.textContent=won(a.net);
+  const order=['bank','cash','saving','investment','deposit','card','loan'];
+  assetGroups.innerHTML=order.map(type=>{
+    const arr=db.accounts.filter(a=>a.type===type); if(!arr.length)return '';
+    return `<div class="asset-group"><div class="asset-head"><strong>${accTypeLabel(type)}</strong><span>${won(arr.reduce((s,a)=>s+a.balance,0))}</span></div>
+    ${arr.map(a=>`<div class="asset-card row" onclick="editAccount('${a.id}')"><div><div class="row-title">${escapeHtml(a.name)}</div><div class="row-meta">${escapeHtml(a.memo||accTypeLabel(a.type))}</div></div><div class="amt">${won(a.balance)}</div></div>`).join('')}</div>`
+  }).join('');
+}
+function renderCalendar(){
+  const y=viewDate.getFullYear(),m=viewDate.getMonth();
+  const first=new Date(y,m,1), start=new Date(y,m,1-first.getDay());
+  let html=['일','월','화','수','목','금','토'].map(x=>`<div class="dow">${x}</div>`).join('');
+  for(let i=0;i<42;i++){
+    const d=new Date(start);d.setDate(start.getDate()+i);
+    const ds=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    const tx=db.transactions.filter(t=>t.date===ds);
+    const ex=tx.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
+    const inc=tx.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
+    html+=`<div class="day ${d.getMonth()!==m?'muted':''}" onclick="selectDay('${ds}')"><div class="day-num">${d.getDate()}</div>
+      ${ex?`<div class="day-amt" style="color:#9a3e3b">-${compact(ex)}</div>`:''}
+      ${inc?`<div class="day-amt" style="color:#257047">+${compact(inc)}</div>`:''}</div>`;
+  }
+  calendarGrid.innerHTML=html;
+  if(selectedCalendarDate) selectDay(selectedCalendarDate,false);
+}
+function compact(n){if(n>=1000000)return (n/10000).toFixed(n%10000?1:0)+'만';if(n>=10000)return Math.round(n/10000)+'만';return n.toLocaleString()}
+window.selectDay=function(ds,scroll=true){
+  selectedCalendarDate=ds;
+  const arr=db.transactions.filter(t=>t.date===ds).sort((a,b)=>b.created-a.created);
+  calendarDayList.innerHTML=arr.length?arr.map(txRow).join(''):'<div class="empty">이 날짜의 거래가 없어요.</div>';
+}
+function renderAnalysis(){
+  const cur=totals(monthTx()), prev=totals(monthTx(-1));
+  anRate.textContent=(db.budget?Math.round(cur.expense/db.budget*100):0)+'%';
+  let ch=prev.expense?((cur.expense-prev.expense)/prev.expense*100):0;
+  anChange.textContent=(ch>0?'+':'')+Math.round(ch)+'%';
+  const cats={};
+  monthTx().filter(t=>t.type==='expense').forEach(t=>cats[t.category||'기타']=(cats[t.category||'기타']||0)+t.amount);
+  const entries=Object.entries(cats).sort((a,b)=>b[1]-a[1]), max=entries[0]?.[1]||1;
+  categoryBars.innerHTML=entries.length?entries.map(([c,v])=>`<div class="bar-row"><div>${escapeHtml(c)}</div><div class="bar-bg"><div class="bar-fill" style="width:${v/max*100}%"></div></div><div style="text-align:right">${compact(v)}</div></div>`).join(''):'<div class="empty">이번 달 지출 데이터가 없어요.</div>';
+  let rows=[];
+  for(let i=5;i>=0;i--){
+    const d=new Date(viewDate.getFullYear(),viewDate.getMonth()-i,1), key=ym(d);
+    const tx=db.transactions.filter(t=>t.date.startsWith(key)), t=totals(tx);
+    rows.push(`<div class="row"><div>${d.getMonth()+1}월</div><div><span class="amt in">+${won(t.income)}</span> &nbsp; <span class="amt out">-${won(t.expense)}</span></div></div>`);
+  }
+  sixMonth.innerHTML=rows.join('');
+}
+function renderSettings(){
+  budgetInput.value=db.budget;
+  categoryList.innerHTML=db.categories.map(c=>`<div class="row"><div>${escapeHtml(c)}</div><button class="danger" onclick="deleteCategory('${encodeURIComponent(c)}')">삭제</button></div>`).join('');
+}
+function populateSelects(){
+  const cats=db.categories.map(c=>`<option value="${escapeAttr(c)}">${escapeHtml(c)}</option>`).join('');
+  const oldCF=categoryFilter.value;categoryFilter.innerHTML='<option value="">모든 카테고리</option>'+cats;categoryFilter.value=oldCF;
+  const oldCat=txCategory.value;txCategory.innerHTML=cats; if(db.categories.includes(oldCat))txCategory.value=oldCat;
+  const opts=db.accounts.map(a=>`<option value="${a.id}">${escapeHtml(a.name)} · ${won(a.balance)}</option>`).join('');
+  txFrom.innerHTML='<option value="">선택 안 함</option>'+opts;txTo.innerHTML='<option value="">선택 안 함</option>'+opts;
+}
+function openTx(id=null){
+  txForm.reset();txId.value='';txModalTitle.textContent='거래 추가';
+  txDate.value=new Date().toISOString().slice(0,10);txType.value='expense';updateTxTypeUI();populateSelects();txDialog.showModal();
+}
+window.openTx=openTx;
+window.editTx=function(id){
+  const t=db.transactions.find(x=>x.id===id);if(!t)return;
+  txId.value=t.id;txType.value=t.type;txDate.value=t.date;txAmount.value=t.amount;txMemo.value=t.memo||'';txPayer.value=t.payer||'공동';txNote.value=t.note||'';
+  updateTxTypeUI();populateSelects();txCategory.value=t.category||db.categories[0];txFrom.value=t.from||'';txTo.value=t.to||'';txModalTitle.textContent='거래 수정';txDialog.showModal();
+}
+function updateTxTypeUI(){
+  const t=txType.value;toWrap.style.display=['transfer','debt'].includes(t)?'flex':'none';
+  fromLabel.textContent=t==='income'?'입금 계좌':t==='expense'?'결제 계좌/카드':t==='transfer'?'보내는 계좌/자산':'상환 출금 계좌';
+}
+function openAccount(){accountId.value='';accountName.value='';accountType.value='bank';accountBalance.value=0;accountMemo.value='';accountTitle.textContent='계좌/재산 추가';accountDialog.showModal()}
+window.openAccount=openAccount;
+window.editAccount=function(id){const a=db.accounts.find(x=>x.id===id);if(!a)return;accountId.value=a.id;accountName.value=a.name;accountType.value=a.type;accountBalance.value=a.balance;accountMemo.value=a.memo||'';accountTitle.textContent='계좌/재산 수정';accountDialog.showModal()}
+function escapeHtml(s=''){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
+function escapeAttr(s=''){return escapeHtml(s)}
+
+document.querySelectorAll('.bottom-nav button').forEach(b=>b.addEventListener('click',()=>{
+  document.querySelectorAll('.bottom-nav button').forEach(x=>x.classList.remove('active'));b.classList.add('active');
+  document.querySelectorAll('section.tab').forEach(x=>x.classList.remove('active'));document.getElementById(b.dataset.tab).classList.add('active');
+  window.scrollTo({top:0,behavior:'instant'});
+}));
+document.querySelectorAll('[data-txfilter]').forEach(b=>b.addEventListener('click',()=>{
+  document.querySelectorAll('[data-txfilter]').forEach(x=>x.classList.remove('active'));b.classList.add('active');txFilter=b.dataset.txfilter;renderTx();
+}));
+prevMonth.onclick=()=>{viewDate=new Date(viewDate.getFullYear(),viewDate.getMonth()-1,1);selectedCalendarDate=null;renderAll();window.scrollTo(0,0)}
+nextMonth.onclick=()=>{viewDate=new Date(viewDate.getFullYear(),viewDate.getMonth()+1,1);selectedCalendarDate=null;renderAll();window.scrollTo(0,0)}
+todayBtn.onclick=()=>{viewDate=new Date();selectedCalendarDate=null;renderAll();window.scrollTo(0,0)}
+txType.onchange=updateTxTypeUI;
+searchInput.addEventListener('input',()=>renderTx());
+categoryFilter.onchange=renderTx;
+
+saveTx.onclick=()=>{
+  const amt=Number(txAmount.value); if(!txDate.value||!amt){alert('날짜와 금액을 입력해 주세요.');return}
+  if(['transfer','debt'].includes(txType.value)&&(!txFrom.value||!txTo.value)){alert('보내는 곳과 받는 곳을 모두 선택해 주세요.');return}
+  if(txType.value==='transfer'&&txFrom.value===txTo.value){alert('서로 다른 계좌를 선택해 주세요.');return}
+  const existing=db.transactions.find(x=>x.id===txId.value); if(existing) reverseEffect(existing);
+  const t={id:existing?.id||crypto.randomUUID(),type:txType.value,date:txDate.value,amount:amt,category:txCategory.value||'',memo:txMemo.value.trim(),from:txFrom.value||'',to:txTo.value||'',payer:txPayer.value,note:txNote.value.trim(),created:existing?.created||Date.now()};
+  if(existing) Object.assign(existing,t); else db.transactions.push(t);
+  applyEffect(t);txDialog.close();save();
+}
+saveAccount.onclick=()=>{
+  const name=accountName.value.trim();if(!name){alert('이름을 입력해 주세요.');return}
+  const id=accountId.value, obj={id:id||crypto.randomUUID(),name,type:accountType.value,balance:Number(accountBalance.value)||0,memo:accountMemo.value.trim()};
+  const ex=db.accounts.find(a=>a.id===id); if(ex)Object.assign(ex,obj); else db.accounts.push(obj);
+  accountDialog.close();save();
+}
+saveBudget.onclick=()=>{db.budget=Math.max(0,Number(budgetInput.value)||0);save()}
+addCategory.onclick=()=>{const c=newCategory.value.trim();if(c&&!db.categories.includes(c)){db.categories.push(c);newCategory.value='';save()}}
+window.deleteCategory=function(enc){const c=decodeURIComponent(enc);if(confirm(`'${c}' 카테고리를 삭제할까요? 기존 거래에는 그대로 남습니다.`)){db.categories=db.categories.filter(x=>x!==c);save()}}
+
+txDialog.addEventListener('click',e=>{if(e.target===txDialog)txDialog.close()});
+accountDialog.addEventListener('click',e=>{if(e.target===accountDialog)accountDialog.close()});
+
+exportJson.onclick=()=>{
+  const blob=new Blob([JSON.stringify(db,null,2)],{type:'application/json'});downloadBlob(blob,`아콩이네_공동가계부_백업_${new Date().toISOString().slice(0,10)}.json`);
+}
+exportCsv.onclick=()=>{
+  const head=['날짜','유형','금액','카테고리','내용','결제한사람','연결계좌','받는계좌','메모'];
+  const rows=db.transactions.map(t=>[t.date,typeLabel(t.type),t.amount,t.category,t.memo,t.payer,db.accounts.find(a=>a.id===t.from)?.name||'',db.accounts.find(a=>a.id===t.to)?.name||'',t.note]);
+  const csv='\ufeff'+[head,...rows].map(r=>r.map(v=>`"${String(v??'').replaceAll('"','""')}"`).join(',')).join('\n');
+  downloadBlob(new Blob([csv],{type:'text/csv;charset=utf-8'}),`아콩이네_공동가계부_거래_${new Date().toISOString().slice(0,10)}.csv`);
+}
+function downloadBlob(blob,name){const u=URL.createObjectURL(blob),a=document.createElement('a');a.href=u;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(u),1000)}
+importJson.onchange=async(e)=>{const f=e.target.files[0];if(!f)return;try{const x=JSON.parse(await f.text());if(!x.accounts||!x.transactions)throw 0;db=x;save();alert('복원했습니다.')}catch{alert('백업 파일을 확인해 주세요.')}e.target.value=''}
+
+if('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(()=>{});
+renderAll();
+</script>
+</body>
+</html>
