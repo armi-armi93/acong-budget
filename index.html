@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no" />
   <meta name="theme-color" content="#f7f7f2" />
-  <title>아콩이네 공동가계부🫛 v1</title>
+  <title>아콩이네 공동가계부🫛 v1.1</title>
   <link rel="manifest" href="manifest.webmanifest" />
   <style>
     :root{
@@ -41,6 +41,17 @@
     .section-title button,.ghost{border:1px solid var(--line);background:#fff;border-radius:10px;padding:7px 10px}
     .primary{background:var(--accent);color:#fff;border:0;border-radius:12px;padding:10px 13px;font-weight:700}
     .danger{background:#fff;color:var(--danger);border:1px solid #e9c8c7;border-radius:10px;padding:7px 10px}
+    .category-delete{padding:5px 8px;border-radius:8px;font-size:11px;line-height:1.15;min-width:auto}
+    .data-card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:14px;margin-bottom:10px;box-shadow:var(--shadow)}
+    .data-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:14px;align-items:center}
+    .data-title{font-size:14px;font-weight:800;margin-bottom:4px}
+    .data-desc{font-size:11px;color:var(--muted);line-height:1.45}
+    .data-action{
+      min-width:96px;border-radius:12px;padding:10px 13px;border:1px solid #d8d8d1;
+      background:#fff;color:var(--text);font-size:13px;font-weight:700;text-align:center
+    }
+    .data-action.dark{background:#222;color:#fff;border-color:#222}
+    .file-state{font-size:11px;color:var(--accent);margin-top:5px;word-break:break-all}
     .progress{height:10px;border-radius:999px;background:#ecece5;overflow:hidden;margin-top:8px}
     .progress > span{display:block;height:100%;background:var(--accent);width:0}
     .list{display:flex;flex-direction:column;gap:8px}
@@ -104,7 +115,7 @@
 <header>
   <div class="title-row">
     <h1>아콩이네 공동가계부🫛</h1>
-    <span class="version">version 1</span>
+    <span class="version">version 1.1</span>
   </div>
   <div class="month-nav">
     <button id="prevMonth">‹</button>
@@ -196,15 +207,81 @@
       <div class="toolbar"><input id="newCategory" placeholder="새 카테고리" /><button class="primary" id="addCategory">추가</button></div>
       <div id="categoryList" class="list"></div>
     </div>
-    <div class="section-title"><h2>데이터</h2></div>
-    <div class="card">
-      <div class="toolbar">
-        <button class="ghost" id="exportJson">백업(JSON)</button>
-        <button class="ghost" id="exportCsv">거래 CSV</button>
-        <label class="ghost" style="display:inline-flex;align-items:center">복원<input id="importJson" type="file" accept=".json" hidden></label>
+    <div class="section-title"><h2>데이터 관리</h2></div>
+
+    <div class="data-card">
+      <div class="data-row">
+        <div>
+          <div class="data-title">CSV 내보내기</div>
+          <div class="data-desc">전체 수익·지출 내역을 CSV로 저장해요.</div>
+        </div>
+        <button class="data-action dark" id="exportCsv">내보내기</button>
       </div>
-      <div class="hint">데이터는 이 기기의 브라우저에 저장됩니다. 중요한 데이터는 정기적으로 JSON 백업을 권장해요.</div>
     </div>
+
+    <div class="data-card">
+      <div class="data-row">
+        <div>
+          <div class="data-title">CSV 가져오기</div>
+          <div class="data-desc">양식에 맞춘 수익·지출 내역을 선택해요.</div>
+          <div class="file-state" id="csvFileState"></div>
+        </div>
+        <label class="data-action">파일 선택<input id="importCsv" type="file" accept=".csv,text/csv" hidden></label>
+      </div>
+    </div>
+
+    <div class="data-card">
+      <div class="data-row">
+        <div>
+          <div class="data-title">선택한 CSV 적용</div>
+          <div class="data-desc">선택한 파일의 내역을 현재 데이터에 추가해요.</div>
+        </div>
+        <button class="data-action dark" id="applyCsv">가져오기</button>
+      </div>
+    </div>
+
+    <div class="data-card">
+      <div class="data-row">
+        <div>
+          <div class="data-title">CSV 입력 양식</div>
+          <div class="data-desc">가져오기용 기본 양식을 받아요.</div>
+        </div>
+        <button class="data-action dark" id="downloadCsvTemplate">양식 받기</button>
+      </div>
+    </div>
+
+    <div class="data-card">
+      <div class="data-row">
+        <div>
+          <div class="data-title">전체 JSON 백업</div>
+          <div class="data-desc">설정·카테고리·재산·모든 거래를 한 번에 보관해요.</div>
+        </div>
+        <button class="data-action dark" id="exportJson">백업</button>
+      </div>
+    </div>
+
+    <div class="data-card">
+      <div class="data-row">
+        <div>
+          <div class="data-title">JSON 복원</div>
+          <div class="data-desc">이전에 저장한 전체 백업 파일을 선택해요.</div>
+          <div class="file-state" id="jsonFileState"></div>
+        </div>
+        <label class="data-action">파일 선택<input id="importJson" type="file" accept=".json,application/json" hidden></label>
+      </div>
+    </div>
+
+    <div class="data-card">
+      <div class="data-row">
+        <div>
+          <div class="data-title">선택한 백업 복원</div>
+          <div class="data-desc">현재 데이터가 선택한 백업 내용으로 교체됩니다.</div>
+        </div>
+        <button class="data-action dark" id="applyJson">복원</button>
+      </div>
+    </div>
+
+    <div class="hint" style="padding:4px 2px 10px">데이터는 이 기기의 브라우저에 저장됩니다. 중요한 데이터는 정기적으로 JSON 백업해 주세요.</div>
   </section>
 </main>
 
@@ -424,7 +501,7 @@ function renderAnalysis(){
 }
 function renderSettings(){
   budgetInput.value=db.budget;
-  categoryList.innerHTML=db.categories.map(c=>`<div class="row"><div>${escapeHtml(c)}</div><button class="danger" onclick="deleteCategory('${encodeURIComponent(c)}')">삭제</button></div>`).join('');
+  categoryList.innerHTML=db.categories.map(c=>`<div class="row"><div>${escapeHtml(c)}</div><button class="danger category-delete" onclick="deleteCategory('${encodeURIComponent(c)}')">삭제</button></div>`).join('');
 }
 function populateSelects(){
   const cats=db.categories.map(c=>`<option value="${escapeAttr(c)}">${escapeHtml(c)}</option>`).join('');
@@ -490,17 +567,112 @@ window.deleteCategory=function(enc){const c=decodeURIComponent(enc);if(confirm(`
 txDialog.addEventListener('click',e=>{if(e.target===txDialog)txDialog.close()});
 accountDialog.addEventListener('click',e=>{if(e.target===accountDialog)accountDialog.close()});
 
+let pendingCsvFile=null;
+let pendingJsonFile=null;
+
 exportJson.onclick=()=>{
-  const blob=new Blob([JSON.stringify(db,null,2)],{type:'application/json'});downloadBlob(blob,`아콩이네_공동가계부_백업_${new Date().toISOString().slice(0,10)}.json`);
+  const blob=new Blob([JSON.stringify(db,null,2)],{type:'application/json'});
+  downloadBlob(blob,`아콩이네_공동가계부_백업_${new Date().toISOString().slice(0,10)}.json`);
 }
 exportCsv.onclick=()=>{
   const head=['날짜','유형','금액','카테고리','내용','결제한사람','연결계좌','받는계좌','메모'];
   const rows=db.transactions.map(t=>[t.date,typeLabel(t.type),t.amount,t.category,t.memo,t.payer,db.accounts.find(a=>a.id===t.from)?.name||'',db.accounts.find(a=>a.id===t.to)?.name||'',t.note]);
-  const csv='\ufeff'+[head,...rows].map(r=>r.map(v=>`"${String(v??'').replaceAll('"','""')}"`).join(',')).join('\n');
+  const csv='\ufeff'+[head,...rows].map(r=>r.map(csvCell).join(',')).join('\n');
   downloadBlob(new Blob([csv],{type:'text/csv;charset=utf-8'}),`아콩이네_공동가계부_거래_${new Date().toISOString().slice(0,10)}.csv`);
 }
+downloadCsvTemplate.onclick=()=>{
+  const head=['날짜','유형','금액','카테고리','내용','결제한사람','연결계좌','받는계좌','메모'];
+  const sample=['2026-08-21','지출','35000','장보기','마트 장보기','공동','공동생활비 통장','','예시 행은 삭제 후 사용'];
+  const csv='\ufeff'+[head,sample].map(r=>r.map(csvCell).join(',')).join('\n');
+  downloadBlob(new Blob([csv],{type:'text/csv;charset=utf-8'}),'아콩이네_공동가계부_CSV입력양식.csv');
+}
+function csvCell(v){return `"${String(v??'').replaceAll('"','""')}"`}
 function downloadBlob(blob,name){const u=URL.createObjectURL(blob),a=document.createElement('a');a.href=u;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(u),1000)}
-importJson.onchange=async(e)=>{const f=e.target.files[0];if(!f)return;try{const x=JSON.parse(await f.text());if(!x.accounts||!x.transactions)throw 0;db=x;save();alert('복원했습니다.')}catch{alert('백업 파일을 확인해 주세요.')}e.target.value=''}
+
+importCsv.onchange=(e)=>{
+  pendingCsvFile=e.target.files[0]||null;
+  csvFileState.textContent=pendingCsvFile?`선택됨: ${pendingCsvFile.name}`:'';
+}
+applyCsv.onclick=async()=>{
+  if(!pendingCsvFile){alert('먼저 CSV 파일을 선택해 주세요.');return}
+  try{
+    const text=(await pendingCsvFile.text()).replace(/^\uFEFF/,'');
+    const rows=parseCsv(text);
+    if(rows.length<2) throw new Error('내용 없음');
+    const head=rows[0].map(x=>x.trim());
+    const required=['날짜','유형','금액','카테고리','내용','결제한사람','연결계좌','받는계좌','메모'];
+    if(!required.every(x=>head.includes(x))) throw new Error('양식 불일치');
+
+    const idx=Object.fromEntries(head.map((h,i)=>[h,i]));
+    let added=0;
+    for(const r of rows.slice(1)){
+      if(!r.some(v=>String(v||'').trim())) continue;
+      const date=(r[idx['날짜']]||'').trim();
+      const amount=Number(String(r[idx['금액']]||'').replaceAll(',','').trim());
+      if(!/^\d{4}-\d{2}-\d{2}$/.test(date)||!amount) continue;
+
+      const label=(r[idx['유형']]||'').trim();
+      const typeMap={'수입':'income','지출':'expense','자산이동':'transfer','부채상환':'debt','income':'income','expense':'expense','transfer':'transfer','debt':'debt'};
+      const type=typeMap[label]||'expense';
+      const fromName=(r[idx['연결계좌']]||'').trim();
+      const toName=(r[idx['받는계좌']]||'').trim();
+      const from=db.accounts.find(a=>a.name===fromName)?.id||'';
+      const to=db.accounts.find(a=>a.name===toName)?.id||'';
+
+      const t={
+        id:crypto.randomUUID(), type, date, amount,
+        category:(r[idx['카테고리']]||'').trim(),
+        memo:(r[idx['내용']]||'').trim(),
+        payer:(r[idx['결제한사람']]||'공동').trim()||'공동',
+        from,to,
+        note:(r[idx['메모']]||'').trim(),
+        created:Date.now()+added
+      };
+      db.transactions.push(t);
+      applyEffect(t);
+      added++;
+    }
+    if(!added) throw new Error('추가할 거래 없음');
+    save();
+    alert(`${added}건을 가져왔습니다.`);
+    pendingCsvFile=null; importCsv.value=''; csvFileState.textContent='';
+  }catch(err){
+    alert('CSV 파일이나 입력 양식을 확인해 주세요.');
+  }
+}
+function parseCsv(text){
+  const out=[]; let row=[], cell='', quoted=false;
+  for(let i=0;i<text.length;i++){
+    const ch=text[i], next=text[i+1];
+    if(ch==='"'){
+      if(quoted && next==='"'){cell+='"';i++}
+      else quoted=!quoted;
+    }else if(ch===',' && !quoted){row.push(cell);cell=''}
+    else if((ch==='\n'||ch==='\r')&&!quoted){
+      if(ch==='\r'&&next==='\n')i++;
+      row.push(cell);out.push(row);row=[];cell='';
+    }else cell+=ch;
+  }
+  if(cell.length||row.length){row.push(cell);out.push(row)}
+  return out;
+}
+
+importJson.onchange=(e)=>{
+  pendingJsonFile=e.target.files[0]||null;
+  jsonFileState.textContent=pendingJsonFile?`선택됨: ${pendingJsonFile.name}`:'';
+}
+applyJson.onclick=async()=>{
+  if(!pendingJsonFile){alert('먼저 JSON 백업 파일을 선택해 주세요.');return}
+  try{
+    const x=JSON.parse(await pendingJsonFile.text());
+    if(!Array.isArray(x.accounts)||!Array.isArray(x.transactions)) throw 0;
+    if(!confirm('현재 데이터를 선택한 백업 내용으로 교체할까요?')) return;
+    db=x;save();alert('복원했습니다.');
+    pendingJsonFile=null; importJson.value=''; jsonFileState.textContent='';
+  }catch{
+    alert('백업 파일을 확인해 주세요.');
+  }
+}
 
 if('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(()=>{});
 renderAll();
